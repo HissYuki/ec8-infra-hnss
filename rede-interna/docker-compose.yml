@@ -1,0 +1,55 @@
+services:
+  hashicorp-vault:
+    image: hashicorp/vault:latest
+    container_name: dados-vault
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_ADDR: "http://0.0.0.0:8200"
+      VAULT_API_ADDR: "http://0.0.0.0:8200"
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - vault_data:/vault/file
+      - ./vault:/vault/config
+    command: server
+    networks:
+      - vlan20
+    restart: unless-stopped
+
+  postgresql:
+    image: postgres:15-alpine
+    container_name: dados-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: teste
+      POSTGRES_DB: dados_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - vlan20
+    restart: unless-stopped
+
+networks:
+  vlan20:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.20.0/24
+  
+  vlan30:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.30.0/24
+  
+  vlan40:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.40.0/24
+
+volumes:
+  vault_data:
+  vault_config:
+  postgres_data:
