@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Login Médico
+{% endblock %}
+
+
+{% block content %}
+
+<div class="login-container">
+
+    <div class="login-icon">
+
+        <img
+            src="{% static 'images/user.png' %}"
+            alt="Ícone de médico"
+        >
+
+    </div>
+
+
+    <h2>
+        Área Médica
+    </h2>
+
+
+    {% if form.errors %}
+
+        <div class="erro">
+
+            {% for error in form.non_field_errors %}
+
+                <p>
+                    {{ error }}
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+
+    <form method="post">
+
+        {% csrf_token %}
+
+
+        <div class="campo">
+
+            <label>
+                Usuário
+            </label>
+
+            {{ form.username }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Senha
+            </label>
+
+            {{ form.password }}
+
+        </div>
+
+
+        <button type="submit">
+            Entrar
+        </button>
+
+    </form>
+
+
+    <div class="login-links">
+
+        <a href="{% url 'accounts:login_paciente' %}">
+            Área do paciente
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

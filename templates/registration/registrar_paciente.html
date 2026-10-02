@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}
+Criar conta
+{% endblock %}
+
+
+{% block content %}
+
+<div class="cadastro-container">
+
+    <h2>
+        Criar conta de paciente
+    </h2>
+
+    <p class="cadastro-descricao">
+        Preencha seus dados para acessar o sistema.
+    </p>
+
+
+    <form method="post">
+
+        {% csrf_token %}
+
+
+        {% if form.errors %}
+
+            <div class="erro">
+
+                {% for field in form %}
+
+                    {% for error in field.errors %}
+
+                        <p>
+                            {{ field.label }}: {{ error }}
+                        </p>
+
+                    {% endfor %}
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+
+        <div class="campo">
+
+            <label>
+                Nome
+            </label>
+
+            {{ form.first_name }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Sobrenome
+            </label>
+
+            {{ form.last_name }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                E-mail
+            </label>
+
+            {{ form.email }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Telefone
+            </label>
+
+            {{ form.telefone }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Data de nascimento
+            </label>
+
+            {{ form.data_nascimento }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Usuário
+            </label>
+
+            {{ form.username }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Senha
+            </label>
+
+            <div class="campo-senha">
+
+                {{ form.password1 }}
+
+                <button
+                    type="button"
+                    class="mostrar-senha"
+                    aria-label="Mostrar senha"
+                    title="Mostrar senha"
+                >
+                    <svg
+                        class="icone-olho"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M12 5C6.5 5 2.2 9.1 1 12c1.2 2.9 5.5 7 11 7s9.8-4.1 11-7c-1.2-2.9-5.5-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
+                        />
+                    </svg>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Confirmar senha
+            </label>
+
+            <div class="campo-senha">
+
+                {{ form.password2 }}
+
+                <button
+                    type="button"
+                    class="mostrar-senha"
+                    aria-label="Mostrar senha"
+                    title="Mostrar senha"
+                >
+                    <svg
+                        class="icone-olho"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M12 5C6.5 5 2.2 9.1 1 12c1.2 2.9 5.5 7 11 7s9.8-4.1 11-7c-1.2-2.9-5.5-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
+                        />
+                    </svg>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <button type="submit">
+            Criar conta
+        </button>
+
+    </form>
+
+
+    <div class="login-links">
+
+        <a href="{% url 'accounts:login_paciente' %}">
+            Já possuo uma conta
+        </a>
+
+    </div>
+
+</div>
+
+<script>
+
+    const botoesSenha = document.querySelectorAll(".mostrar-senha");
+
+    botoesSenha.forEach(function(botao) {
+
+        botao.addEventListener("click", function() {
+
+            const campoSenha = botao.parentElement.querySelector("input");
+
+            if (campoSenha.type === "password") {
+
+                campoSenha.type = "text";
+
+                botao.setAttribute(
+                    "aria-label",
+                    "Ocultar senha"
+                );
+
+                botao.setAttribute(
+                    "title",
+                    "Ocultar senha"
+                );
+
+            } else {
+
+                campoSenha.type = "password";
+
+                botao.setAttribute(
+                    "aria-label",
+                    "Mostrar senha"
+                );
+
+                botao.setAttribute(
+                    "title",
+                    "Mostrar senha"
+                );
+
+            }
+
+        });
+
+    });
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,594 @@
+{% extends "base.html" %}
+
+{% block title %}
+Minha disponibilidade
+{% endblock %}
+
+
+{% block content %}
+
+<div class="dashboard-header">
+
+    <h2>
+        Minha disponibilidade
+    </h2>
+
+    <p>
+        Defina os dias e horários em que você poderá atender.
+    </p>
+
+</div>
+
+
+<!-- =========================================
+     ESCOLHA DO TIPO DE DISPONIBILIDADE
+========================================= -->
+
+<div class="dashboard-card">
+
+    <h3>
+        Adicionar horários
+    </h3>
+
+    <div class="tipo-disponibilidade">
+
+        <button
+            type="button"
+            id="mostrar-diario"
+            class="botao"
+        >
+            Adicionar disponibilidade (diária)
+        </button>
+
+
+        <button
+            type="button"
+            id="mostrar-semanal"
+            class="botao"
+        >
+            Adicionar horário (semanal / mensal)
+        </button>
+
+    </div>
+
+
+    <!-- =====================================
+         DISPONIBILIDADE DE UM DIA
+    ====================================== -->
+
+    <div id="form-diario">
+
+        <h3>
+            Disponibilidade de um dia
+        </h3>
+
+        <p>
+            Escolha uma data e o período em que estará disponível.
+            Os horários serão criados em intervalos de 30 minutos.
+        </p>
+
+
+        {% if form_diario.non_field_errors %}
+
+            <div class="erro">
+
+                {% for erro in form_diario.non_field_errors %}
+
+                    <p>
+                        {{ erro }}
+                    </p>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="tipo_disponibilidade"
+                value="diaria"
+            >
+
+
+            <div class="campo">
+
+                <label>
+                    Data
+                </label>
+
+                {{ form_diario.data }}
+
+                {% for erro in form_diario.data.errors %}
+                    <p class="erro">
+                        {{ erro }}
+                    </p>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="campo">
+
+                <label>
+                    Horário inicial
+                </label>
+
+                {{ form_diario.hora_inicio }}
+
+                {% for erro in form_diario.hora_inicio.errors %}
+                    <p class="erro">
+                        {{ erro }}
+                    </p>
+                {% endfor %}
+
+            </div>
+
+
+            <div class="campo">
+
+                <label>
+                    Horário final
+                </label>
+
+                {{ form_diario.hora_fim }}
+
+                {% for erro in form_diario.hora_fim.errors %}
+                    <p class="erro">
+                        {{ erro }}
+                    </p>
+                {% endfor %}
+
+            </div>
+
+
+            <button type="submit">
+                Adicionar
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <!-- =====================================
+         DISPONIBILIDADE SEMANAL
+    ====================================== -->
+
+    <div
+        id="form-semanal"
+        style="display: none;"
+    >
+
+        <h3>
+            Horário semanal
+        </h3>
+
+        <p>
+            Defina um período, escolha os dias da semana
+            e o sistema criará automaticamente os horários
+            de 30 em 30 minutos.
+        </p>
+
+
+        {% if form_semanal.non_field_errors %}
+
+            <div class="erro">
+
+                {% for erro in form_semanal.non_field_errors %}
+
+                    <p>
+                        {{ erro }}
+                    </p>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="tipo_disponibilidade"
+                value="semanal"
+            >
+
+
+            <div class="campo">
+
+                <label>
+                    Data inicial
+                </label>
+
+                {{ form_semanal.data_inicio }}
+
+            </div>
+
+
+            <div class="campo">
+
+                <label>
+                    Data final
+                </label>
+
+                {{ form_semanal.data_fim }}
+
+            </div>
+
+
+            <div class="campo">
+
+                <label class="titulo-dias-semana">
+                    Dias da semana
+                </label>
+
+                <p class="ajuda-dias-semana">
+                    Selecione os dias em que este horário deverá se repetir.
+                </p>
+
+                <div class="dias-semana-grid">
+
+                    {% for checkbox in form_semanal.dias_semana %}
+
+                        <label
+                            class="dia-semana-card"
+                            for="{{ checkbox.id_for_label }}"
+                        >
+
+                            {{ checkbox.tag }}
+
+                            <span class="nome-dia">
+                                {{ checkbox.choice_label }}
+                            </span>
+
+                        </label>
+
+                    {% endfor %}
+
+                </div>
+
+                {% if form_semanal.dias_semana.errors %}
+
+                    <div class="erro">
+
+                        {% for erro in form_semanal.dias_semana.errors %}
+
+                            <p>
+                                {{ erro }}
+                            </p>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="campo">
+
+                <label>
+                    Horário inicial
+                </label>
+
+                {{ form_semanal.hora_inicio }}
+
+            </div>
+
+
+            <div class="campo">
+
+                <label>
+                    Horário final
+                </label>
+
+                {{ form_semanal.hora_fim }}
+
+            </div>
+
+
+            <button type="submit">
+                Adicionar
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     HORÁRIOS CADASTRADOS
+========================================= -->
+
+<div class="dashboard-card">
+
+    <h3>
+        Horários disponiveis
+    </h3>
+
+
+    {% if datas_disponiveis %}
+
+        <!-- =====================================
+             SELEÇÃO DO DIA
+        ====================================== -->
+
+        <div class="filtro-horarios">
+
+            <form method="get">
+
+                <div class="campo">
+
+                    <label for="data-horarios">
+                        Visualizar dia
+                    </label>
+
+
+                    <select
+                        name="data"
+                        id="data-horarios"
+                        onchange="this.form.submit()"
+                    >
+
+                        {% for data in datas_disponiveis %}
+
+                            <option
+                                value="{{ data|date:'Y-m-d' }}"
+                                {% if data == data_selecionada %}
+                                    selected
+                                {% endif %}
+                            >
+
+                                {{ data|date:"d/m/Y" }}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+        <!-- =====================================
+             DATA ATUALMENTE SELECIONADA
+        ====================================== -->
+
+        <div class="cabecalho-horarios-dia">
+
+            <h3>
+                Horários de {{ data_selecionada|date:"d/m/Y" }}
+            </h3>
+
+
+            {% if horarios %}
+
+                <form
+                    method="post"
+                    action="{% url 'medicos:remover_todos_horarios' %}"
+                >
+
+                    {% csrf_token %}
+
+                    <input
+                        type="hidden"
+                        name="data"
+                        value="{{ data_selecionada|date:'Y-m-d' }}"
+                    >
+
+
+                    <button
+                        type="submit"
+                        class="botao-remover-todos"
+                        onclick="
+                            return confirm(
+                                'Deseja realmente remover todos os horários disponíveis deste dia? Consultas já agendadas não serão removidas.'
+                            );
+                        "
+                    >
+                        Remover todos os horários
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- =====================================
+             HORÁRIOS DO DIA
+        ====================================== -->
+
+        {% if horarios %}
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Horário
+                        </th>
+
+                        <th>
+                            Situação
+                        </th>
+
+                        <th>
+                            Ação
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for horario in horarios %}
+
+                        <tr>
+
+                            <td>
+
+                                {{ horario.data_hora|date:"H:i" }}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if horario.ativo %}
+
+                                    Disponível
+
+                                {% else %}
+
+                                    Ocupado
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if horario.ativo %}
+
+                                    <form
+                                        method="post"
+                                        action="{% url 'medicos:remover_horario' horario.id %}"
+                                        onsubmit="return confirm('Deseja remover este horário?');"
+                                    >
+
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                        >
+                                            Remover
+                                        </button>
+
+                                    </form>
+
+
+                                {% else %}
+
+                                    Consulta agendada
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+
+        {% else %}
+
+            <p>
+                Não existem horários cadastrados para esta data.
+            </p>
+
+        {% endif %}
+
+
+    {% else %}
+
+        <p>
+            Você ainda não possui horários futuros cadastrados.
+        </p>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const botaoDiario =
+            document.getElementById(
+                "mostrar-diario"
+            );
+
+        const botaoSemanal =
+            document.getElementById(
+                "mostrar-semanal"
+            );
+
+        const formDiario =
+            document.getElementById(
+                "form-diario"
+            );
+
+        const formSemanal =
+            document.getElementById(
+                "form-semanal"
+            );
+
+
+        botaoDiario.addEventListener(
+            "click",
+            function () {
+
+                formDiario.style.display =
+                    "block";
+
+                formSemanal.style.display =
+                    "none";
+
+            }
+        );
+
+
+        botaoSemanal.addEventListener(
+            "click",
+            function () {
+
+                formDiario.style.display =
+                    "none";
+
+                formSemanal.style.display =
+                    "block";
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+{% endblock %}

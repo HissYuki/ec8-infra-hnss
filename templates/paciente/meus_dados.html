@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}
+Meus Dados
+{% endblock %}
+
+
+{% block content %}
+
+<div class="dados-container">
+
+    <h2>
+        Meus dados
+    </h2>
+
+    <p>
+        Atualize suas informações pessoais.
+    </p>
+
+
+    <form method="post">
+
+        {% csrf_token %}
+
+
+        <div class="campo">
+
+            <label>
+                Nome
+            </label>
+
+            {{ form.first_name }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Sobrenome
+            </label>
+
+            {{ form.last_name }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                E-mail
+            </label>
+
+            {{ form.email }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Telefone
+            </label>
+
+            {{ form.telefone }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Data de nascimento
+            </label>
+
+            {{ form.data_nascimento }}
+
+        </div>
+
+
+        <button type="submit">
+            Salvar alterações
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,694 @@
+{% extends "base.html" %}
+
+{% block title %}
+Exames
+{% endblock %}
+
+
+{% block extra_css %}
+
+<link
+    href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.css"
+    rel="stylesheet"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<div class="dashboard-header">
+
+    <h2>
+        Agendar exame
+    </h2>
+
+    <p>
+        Escolha o exame desejado e selecione um horário disponível.
+    </p>
+
+</div>
+
+
+<div class="acoes">
+
+    <a
+        href="{% url 'pacientes:dashboard' %}"
+        class="botao"
+    >
+        Voltar
+    </a>
+
+</div>
+
+
+<!-- =====================================================
+     AGENDAMENTO
+===================================================== -->
+
+<div class="dashboard-card">
+
+    <div class="campo">
+
+        <label for="exame-select">
+            Exame
+        </label>
+
+
+        <select id="exame-select">
+
+            <option value="">
+                Selecione um exame
+            </option>
+
+
+            {% for exame in exames %}
+
+                <option value="{{ exame.id }}">
+                    {{ exame.nome }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+
+    <div
+        id="mensagem-calendario"
+        class="mensagem-calendario"
+    >
+        Selecione um exame para visualizar os horários disponíveis.
+    </div>
+
+
+    <div id="calendario-exame">
+    </div>
+
+
+    <form
+        id="form-agendamento"
+        method="post"
+    >
+
+        {% csrf_token %}
+
+    </form>
+
+</div>
+
+
+<!-- =====================================================
+     MEUS EXAMES
+===================================================== -->
+
+<div class="dashboard-card">
+
+    <h3>
+        Meus exames
+    </h3>
+
+
+    <div class="abas-consultas">
+
+        <button
+            type="button"
+            id="aba-atuais"
+            class="aba-consulta ativa"
+        >
+            Exames atuais
+        </button>
+
+
+        <button
+            type="button"
+            id="aba-passados"
+            class="aba-consulta"
+        >
+            Exames passados
+        </button>
+
+    </div>
+
+
+    <!-- EXAMES ATUAIS -->
+
+    <div id="exames-atuais">
+
+        {% if exames_atuais %}
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Exame</th>
+                        <th>Data</th>
+                        <th>Horário</th>
+                        <th>Ação</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for agendamento in exames_atuais %}
+
+                        <tr>
+
+                            <td>
+                                {{ agendamento.exame.nome }}
+                            </td>
+
+                            <td>
+                                {{ agendamento.data_hora|date:"d/m/Y" }}
+                            </td>
+
+                            <td>
+                                {{ agendamento.data_hora|date:"H:i" }}
+                            </td>
+
+                            <td>
+
+                                <form
+                                    method="post"
+                                    action="{% url 'pacientes:cancelar_exame' agendamento.id %}"
+                                    onsubmit="return confirm('Deseja realmente cancelar este exame?');"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="botao-cancelar"
+                                    >
+                                        Cancelar
+                                    </button>
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+
+        {% else %}
+
+            <p>
+                Você não possui exames futuros agendados.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- EXAMES PASSADOS -->
+
+    <div
+        id="exames-passados"
+        style="display: none;"
+    >
+
+        {% if exames_passados %}
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Exame</th>
+                        <th>Data</th>
+                        <th>Horário</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for agendamento in exames_passados %}
+
+                        <tr>
+
+                            <td>
+                                {{ agendamento.exame.nome }}
+                            </td>
+
+                            <td>
+                                {{ agendamento.data_hora|date:"d/m/Y" }}
+                            </td>
+
+                            <td>
+                                {{ agendamento.data_hora|date:"H:i" }}
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+
+        {% else %}
+
+            <p>
+                Você ainda não possui exames anteriores.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script
+    src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js">
+</script>
+
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const selectExame =
+            document.getElementById(
+                "exame-select"
+            );
+
+
+        const elementoCalendario =
+            document.getElementById(
+                "calendario-exame"
+            );
+
+
+        const mensagemCalendario =
+            document.getElementById(
+                "mensagem-calendario"
+            );
+
+
+        const formularioAgendamento =
+            document.getElementById(
+                "form-agendamento"
+            );
+
+
+        const urlHorarios =
+            "{% url 'pacientes:horarios_exame_disponiveis' 0 %}";
+
+
+        const urlAgendamento =
+            "{% url 'pacientes:agendar_exame' 0 %}";
+
+
+        /*
+        ==================================================
+        CALENDÁRIO
+        ==================================================
+        */
+
+        const calendario =
+            new FullCalendar.Calendar(
+                elementoCalendario,
+                {
+
+                    initialView:
+                        "dayGridMonth",
+
+                    locale:
+                        "pt-br",
+
+                    timeZone:
+                        "local",
+
+                    height:
+                        "auto",
+
+                    slotMinTime:
+                        "06:00:00",
+
+                    slotMaxTime:
+                        "20:30:00",
+
+                    slotDuration:
+                        "00:30:00",
+
+                    slotLabelInterval:
+                        "00:30:00",
+
+                    slotLabelFormat: {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false
+                    },
+
+                    eventTimeFormat: {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false
+                    },
+
+                    allDaySlot:
+                        false,
+
+                    nowIndicator:
+                        true,
+
+
+                    headerToolbar: {
+
+                        left:
+                            "prev,next today",
+
+                        center:
+                            "title",
+
+                        right:
+                            "dayGridMonth,timeGridDay"
+
+                    },
+
+
+                    buttonText: {
+
+                        today:
+                            "Hoje",
+
+                        month:
+                            "Mês",
+
+                        day:
+                            "Dia"
+
+                    },
+
+
+                    dateClick: function(info) {
+
+                        if (
+                            calendario.view.type
+                            === "dayGridMonth"
+                        ) {
+
+                            calendario.changeView(
+                                "timeGridDay",
+                                info.dateStr
+                            );
+
+                        }
+
+                    },
+
+
+                    eventClick: function(info) {
+
+                        const evento =
+                            info.event;
+
+
+                        const dataHorario =
+                            evento.start.toLocaleString(
+                                "pt-BR",
+                                {
+                                    dateStyle:
+                                        "short",
+
+                                    timeStyle:
+                                        "short"
+                                }
+                            );
+
+
+                        if (
+                            !confirm(
+                                "Deseja agendar este exame para "
+                                + dataHorario
+                                + "?"
+                            )
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        formularioAgendamento.action =
+                            urlAgendamento.replace(
+                                "/0/",
+                                "/" + evento.id + "/"
+                            );
+
+
+                        formularioAgendamento.submit();
+
+                    }
+
+                }
+            );
+
+
+        calendario.render();
+
+
+        /*
+        ==================================================
+        ESCOLHA DO EXAME
+        ==================================================
+        */
+
+        selectExame.addEventListener(
+            "change",
+            function () {
+
+                calendario.removeAllEventSources();
+
+                elementoCalendario.style.display =
+                    "block";
+
+
+                if (!this.value) {
+
+                    mensagemCalendario.style.display =
+                        "block";
+
+
+                    mensagemCalendario.textContent =
+                        "Selecione um exame para visualizar os horários.";
+
+
+                    calendario.updateSize();
+
+                    return;
+
+                }
+
+
+                mensagemCalendario.style.display =
+                    "block";
+
+
+                mensagemCalendario.textContent =
+                    "Carregando horários disponíveis...";
+
+
+                const url =
+                    urlHorarios.replace(
+                        "/0/",
+                        "/" + this.value + "/"
+                    );
+
+
+                fetch(url)
+
+                    .then(
+                        response => {
+
+                            if (!response.ok) {
+                                throw new Error();
+                            }
+
+                            return response.json();
+
+                        }
+                    )
+
+                    .then(
+                        dados => {
+
+                            if (dados.bloqueado) {
+
+                                elementoCalendario.style.display =
+                                    "none";
+
+
+                                mensagemCalendario.style.display =
+                                    "block";
+
+
+                                mensagemCalendario.textContent =
+                                    dados.mensagem;
+
+
+                                return;
+
+                            }
+
+
+                            elementoCalendario.style.display =
+                                "block";
+
+
+                            if (
+                                dados.eventos.length === 0
+                            ) {
+
+                                mensagemCalendario.style.display =
+                                    "block";
+
+
+                                mensagemCalendario.textContent =
+                                    "Este exame não possui horários disponíveis no momento.";
+
+
+                                calendario.updateSize();
+
+                                return;
+
+                            }
+
+
+                            mensagemCalendario.style.display =
+                                "none";
+
+
+                            calendario.addEventSource(
+                                dados.eventos
+                            );
+
+
+                            calendario.updateSize();
+
+                        }
+                    )
+
+                    .catch(
+                        () => {
+
+                            mensagemCalendario.style.display =
+                                "block";
+
+
+                            mensagemCalendario.textContent =
+                                "Não foi possível carregar os horários.";
+
+                        }
+                    );
+
+            }
+        );
+
+
+        /*
+        ==================================================
+        ABAS
+        ==================================================
+        */
+
+        const abaAtuais =
+            document.getElementById(
+                "aba-atuais"
+            );
+
+
+        const abaPassados =
+            document.getElementById(
+                "aba-passados"
+            );
+
+
+        const examesAtuais =
+            document.getElementById(
+                "exames-atuais"
+            );
+
+
+        const examesPassados =
+            document.getElementById(
+                "exames-passados"
+            );
+
+
+        abaAtuais.addEventListener(
+            "click",
+            function () {
+
+                examesAtuais.style.display =
+                    "block";
+
+                examesPassados.style.display =
+                    "none";
+
+                abaAtuais.classList.add(
+                    "ativa"
+                );
+
+                abaPassados.classList.remove(
+                    "ativa"
+                );
+
+            }
+        );
+
+
+        abaPassados.addEventListener(
+            "click",
+            function () {
+
+                examesAtuais.style.display =
+                    "none";
+
+                examesPassados.style.display =
+                    "block";
+
+                abaPassados.classList.add(
+                    "ativa"
+                );
+
+                abaAtuais.classList.remove(
+                    "ativa"
+                );
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+{% endblock %}
