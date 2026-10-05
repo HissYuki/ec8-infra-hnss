@@ -149,6 +149,8 @@ activemq-data/
 
 # Environments
 .env
+.env.*
+!.env.example
 .envrc
 .venv
 env/
@@ -218,3 +220,21 @@ __marimo__/
 .streamlit/secrets.toml
 
 proxy/certs/*
+
+# Configuração local de editores e ferramentas
+.vscode/
+.idea/
+.codex/
+.agents/
+.aws/
+
+# Arquivos temporários e do sistema operacional
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+*.tmp
+*.temp
+~$*

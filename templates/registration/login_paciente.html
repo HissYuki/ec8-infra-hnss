@@ -6,6 +6,10 @@ Login do Paciente
 {% endblock %}
 
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/accounts.css' %}">
+{% endblock %}
+
 {% block content %}
 
 <div class="login-container">
@@ -58,6 +62,7 @@ Login do Paciente
     <form method="post">
 
         {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
 
 
         <div class="campo">
@@ -90,6 +95,7 @@ Login do Paciente
 
 
     <div class="login-links">
+        <p><a href="{% url 'accounts:password_reset' %}">Esqueci minha senha</a></p>
 
         <p>
             Ainda não possui uma conta?

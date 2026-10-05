@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.db import transaction
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -877,7 +878,8 @@ def agendar_exame(request, horario_id):
 
             horario = (
                 HorarioExameDisponivel.objects
-                .select_for_update()
+                # PostgreSQL não permite bloquear o lado opcional de um JOIN.
+                .select_for_update(of=("self",))
                 .select_related(
                     "exame",
                     "medico_responsavel",
@@ -1166,7 +1168,9 @@ def meus_dados(request):
 
         if form.is_valid():
 
-            form.save()
+            with transaction.atomic():
+                form.save()
+            messages.success(request, 'Informações atualizadas com sucesso.')
 
 
             return redirect(

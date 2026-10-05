@@ -1,9 +1,14 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
 Área do Paciente
 {% endblock %}
 
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pacientes.css' %}">
+{% endblock %}
 
 {% block content %}
 

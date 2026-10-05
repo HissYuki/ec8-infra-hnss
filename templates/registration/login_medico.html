@@ -6,6 +6,10 @@ Login Médico
 {% endblock %}
 
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/accounts.css' %}">
+{% endblock %}
+
 {% block content %}
 
 <div class="login-container">
@@ -45,6 +49,7 @@ Login Médico
     <form method="post">
 
         {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
 
 
         <div class="campo">

@@ -20,6 +20,7 @@ from pacientes.models import Paciente
 from .models import Medico
 
 from .forms import (
+    ObservacoesConsultaForm,
     DisponibilidadeForm,
     DisponibilidadeSemanalForm,
 )
@@ -127,6 +128,28 @@ def dados_paciente(request, paciente_id):
 # =========================================================
 
 @login_required
+def detalhe_consulta(request, consulta_id):
+    if request.user.tipo != 'MEDICO':
+        return HttpResponseForbidden('Acesso não autorizado.')
+    consulta = get_object_or_404(
+        Consulta.objects.select_related('paciente__usuario', 'medico__usuario'),
+        pk=consulta_id, medico__usuario=request.user,
+    )
+    form = ObservacoesConsultaForm(request.POST if request.method == 'POST' else None, instance=consulta)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Observações da consulta salvas com sucesso.')
+        return redirect('medicos:detalhe_consulta', consulta_id=consulta.pk)
+    historico = Consulta.objects.filter(
+        medico=consulta.medico, paciente=consulta.paciente,
+        data_hora__lte=timezone.now(),
+    ).exclude(pk=consulta.pk).order_by('-data_hora')
+    return render(request, 'medico/detalhe_consulta.html', {
+        'consulta': consulta, 'paciente': consulta.paciente, 'form': form, 'historico': historico,
+    })
+
+
+@login_required
 def consultas_calendario(request):
 
     if request.user.tipo != "MEDICO":
@@ -174,6 +197,7 @@ def consultas_calendario(request):
         eventos.append(
             {
                 "id": f"consulta-{consulta.id}",
+                "url": reverse('medicos:detalhe_consulta', args=[consulta.pk]),
                 "title": f"Consulta - {paciente_nome}",
                 "start": consulta.data_hora.isoformat(),
                 "end": (
@@ -188,6 +212,21 @@ def consultas_calendario(request):
 
 
     # =====================================================
+    # Horários livres: não duplica consultas nem reservas de exames.
+    ocupados_consultas = Consulta.objects.filter(medico=medico).values('data_hora')
+    ocupados_exames = HorarioExameDisponivel.objects.filter(medico_responsavel=medico).values('data_hora')
+    agendados_exames = AgendamentoExame.objects.filter(medico_responsavel=medico).values('data_hora')
+    livres = HorarioDisponivel.objects.filter(medico=medico, ativo=True).exclude(
+        data_hora__in=ocupados_consultas,
+    ).exclude(data_hora__in=ocupados_exames).exclude(data_hora__in=agendados_exames)
+    for horario in livres:
+        eventos.append({
+            'id': f'disponivel-{horario.pk}', 'title': 'Consulta — horário livre',
+            'start': horario.data_hora.isoformat(),
+            'end': (horario.data_hora + timedelta(minutes=30)).isoformat(),
+            'classNames': ['evento-disponivel'],
+        })
+
     # EXAMES
     # =====================================================
 

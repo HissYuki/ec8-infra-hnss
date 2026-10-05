@@ -1,9 +1,14 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
 Meus Dados
 {% endblock %}
 
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pacientes.css' %}">
+{% endblock %}
 
 {% block content %}
 
@@ -21,6 +26,7 @@ Meus Dados
     <form method="post">
 
         {% csrf_token %}
+        {{ form.non_field_errors }}
 
 
         <div class="campo">
@@ -30,6 +36,7 @@ Meus Dados
             </label>
 
             {{ form.first_name }}
+            {{ form.first_name.errors }}
 
         </div>
 
@@ -41,6 +48,7 @@ Meus Dados
             </label>
 
             {{ form.last_name }}
+            {{ form.last_name.errors }}
 
         </div>
 
@@ -52,6 +60,7 @@ Meus Dados
             </label>
 
             {{ form.email }}
+            {{ form.email.errors }}
 
         </div>
 
@@ -63,6 +72,7 @@ Meus Dados
             </label>
 
             {{ form.telefone }}
+            {{ form.telefone.errors }}
 
         </div>
 
@@ -74,6 +84,7 @@ Meus Dados
             </label>
 
             {{ form.data_nascimento }}
+            {{ form.data_nascimento.errors }}
 
         </div>
 

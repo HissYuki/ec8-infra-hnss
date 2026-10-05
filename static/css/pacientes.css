@@ -1,0 +1,53 @@
+#medico-select,
+#exame-select {
+    width: 100%;
+    max-width: 400px;
+
+    padding: 10px;
+
+    margin-top: 8px;
+
+    border: 1px solid #ccc;
+
+    border-radius: 5px;
+}
+
+#calendario-paciente {
+    margin-top: 25px;
+}
+
+.mensagem-calendario{
+    margin-bottom:20px;
+}
+
+.opcoes-paciente {
+    display: flex;
+    gap: 25px;
+    margin-top: 25px;
+}
+
+.opcao-paciente {
+    flex: 1;
+
+    padding: 30px;
+
+    background: white;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    text-decoration: none;
+    color: #222;
+
+    transition: 0.2s;
+}
+
+.opcao-paciente:hover {
+    transform: translateY(-3px);
+
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+}
+
+.opcao-paciente h3 {
+    margin-top: 0;
+}

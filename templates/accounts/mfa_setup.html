@@ -1,0 +1,14 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Configurar autenticador{% endblock %}
+{% block auth_content %}
+<h2>Configure a verificação em duas etapas</h2>
+<p>No Google Authenticator, Microsoft Authenticator ou outro aplicativo TOTP, adicione uma conta lendo este QR Code.</p>
+<img class="mfa-qr" src="{% url 'accounts:mfa_qr' %}" alt="QR Code para configurar seu autenticador">
+<p>Digite o código de 6 dígitos exibido no aplicativo. O acesso será liberado após a confirmação.</p>
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="campo">{{ form.token.label_tag }}{{ form.token }}{{ form.token.errors }}</div>
+    <button type="submit">Ativar MFA</button>
+</form>
+{% endblock %}

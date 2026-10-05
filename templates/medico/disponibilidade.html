@@ -1,9 +1,14 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
 Minha disponibilidade
 {% endblock %}
 
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/disponibilidade.css' %}">
+{% endblock %}
 
 {% block content %}
 
@@ -34,7 +39,7 @@ Minha disponibilidade
 
         <button
             type="button"
-            id="mostrar-diario"
+            id="mostrar-diario" data-mostrar-aba="form-diario"
             class="botao"
         >
             Adicionar disponibilidade (diária)
@@ -43,7 +48,7 @@ Minha disponibilidade
 
         <button
             type="button"
-            id="mostrar-semanal"
+            id="mostrar-semanal" data-mostrar-aba="form-semanal"
             class="botao"
         >
             Adicionar horário (semanal / mensal)
@@ -160,9 +165,9 @@ Minha disponibilidade
          DISPONIBILIDADE SEMANAL
     ====================================== -->
 
-    <div
+    <div class="inicialmente-oculto"
         id="form-semanal"
-        style="display: none;"
+
     >
 
         <h3>
@@ -340,7 +345,7 @@ Minha disponibilidade
                     <select
                         name="data"
                         id="data-horarios"
-                        onchange="this.form.submit()"
+                        data-submit-on-change
                     >
 
                         {% for data in datas_disponiveis %}
@@ -397,11 +402,7 @@ Minha disponibilidade
                     <button
                         type="submit"
                         class="botao-remover-todos"
-                        onclick="
-                            return confirm(
-                                'Deseja realmente remover todos os horários disponíveis deste dia? Consultas já agendadas não serão removidas.'
-                            );
-                        "
+                        data-confirm-click="Deseja realmente remover todos os horários disponíveis deste dia? Consultas já agendadas não serão removidas."
                     >
                         Remover todos os horários
                     </button>
@@ -477,7 +478,7 @@ Minha disponibilidade
                                     <form
                                         method="post"
                                         action="{% url 'medicos:remover_horario' horario.id %}"
-                                        onsubmit="return confirm('Deseja remover este horário?');"
+                                        data-confirm-submit="Deseja remover este horário?"
                                     >
 
                                         {% csrf_token %}
@@ -532,63 +533,6 @@ Minha disponibilidade
 
 {% block extra_js %}
 
-<script>
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        const botaoDiario =
-            document.getElementById(
-                "mostrar-diario"
-            );
-
-        const botaoSemanal =
-            document.getElementById(
-                "mostrar-semanal"
-            );
-
-        const formDiario =
-            document.getElementById(
-                "form-diario"
-            );
-
-        const formSemanal =
-            document.getElementById(
-                "form-semanal"
-            );
-
-
-        botaoDiario.addEventListener(
-            "click",
-            function () {
-
-                formDiario.style.display =
-                    "block";
-
-                formSemanal.style.display =
-                    "none";
-
-            }
-        );
-
-
-        botaoSemanal.addEventListener(
-            "click",
-            function () {
-
-                formDiario.style.display =
-                    "none";
-
-                formSemanal.style.display =
-                    "block";
-
-            }
-        );
-
-    }
-);
-
-</script>
+<script src="{% static 'js/disponibilidade.js' %}"></script>
 
 {% endblock %}

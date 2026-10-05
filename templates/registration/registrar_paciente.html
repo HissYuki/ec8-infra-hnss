@@ -1,9 +1,14 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
 Criar conta
 {% endblock %}
 
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/accounts.css' %}">
+{% endblock %}
 
 {% block content %}
 
@@ -193,50 +198,9 @@ Criar conta
 
 </div>
 
-<script>
 
-    const botoesSenha = document.querySelectorAll(".mostrar-senha");
+{% endblock %}
 
-    botoesSenha.forEach(function(botao) {
-
-        botao.addEventListener("click", function() {
-
-            const campoSenha = botao.parentElement.querySelector("input");
-
-            if (campoSenha.type === "password") {
-
-                campoSenha.type = "text";
-
-                botao.setAttribute(
-                    "aria-label",
-                    "Ocultar senha"
-                );
-
-                botao.setAttribute(
-                    "title",
-                    "Ocultar senha"
-                );
-
-            } else {
-
-                campoSenha.type = "password";
-
-                botao.setAttribute(
-                    "aria-label",
-                    "Mostrar senha"
-                );
-
-                botao.setAttribute(
-                    "title",
-                    "Mostrar senha"
-                );
-
-            }
-
-        });
-
-    });
-
-</script>
-
+{% block extra_js %}
+<script src="{% static 'js/accounts.js' %}"></script>
 {% endblock %}

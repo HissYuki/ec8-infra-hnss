@@ -11,6 +11,8 @@ from .models import (
 
 @admin.register(Consulta)
 class ConsultaAdmin(admin.ModelAdmin):
+    # A edição clínica fica na view restrita ao médico responsável.
+    readonly_fields = ('observacoes',)
 
     list_display = (
         "paciente",

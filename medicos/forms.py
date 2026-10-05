@@ -1,6 +1,15 @@
 from datetime import time, datetime, timedelta
 
 from django import forms
+from consultas.models import Consulta
+
+
+class ObservacoesConsultaForm(forms.ModelForm):
+    class Meta:
+        model = Consulta
+        fields = ('observacoes',)
+        labels = {'observacoes': 'Observações da consulta'}
+        widgets = {'observacoes': forms.Textarea(attrs={'rows': 8})}
 
 
 # =========================================================

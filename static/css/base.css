@@ -1,0 +1,197 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f7f9;
+    color: #333;
+}
+
+.container {
+    width: 90%;
+    max-width: 1100px;
+    margin: auto;
+}
+
+header {
+    background: white;
+    border-bottom: 3px solid #087fa0;
+    min-height: 105px;
+    padding: 15px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Quando NÃO estiver logado */
+.header-deslogado {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-right: 20px;
+    min-height: 75px;
+}
+
+/* Quando estiver logado */
+.header-logado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 75px;
+}
+
+.hospital-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.hospital-logo {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+.hospital-brand h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+header h1 {
+    font-size: 22px;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+nav a {
+    text-decoration: none;
+    color: #333;
+}
+
+main {
+    padding-top: 40px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.campo {
+    margin-bottom: 20px;
+}
+
+.campo label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.campo input[type="text"],
+.campo input[type="password"],
+.campo input[type="email"],
+.campo input[type="date"],
+.campo input[type="time"],
+.campo select {
+    width: 100%;
+    box-sizing: border-box;
+
+    min-height: 36px;
+
+    padding: 7px 10px;
+
+    border: 1px solid #8c8c8c;
+
+    background: white;
+
+    font-size: 14px;
+}
+
+button,
+.botao {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+table {
+    width: 100%;
+    background: white;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th,
+td {
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.logout-form {
+    display: inline;
+}
+
+.erro {
+    color: #b00020;
+}
+
+.dashboard-card {
+    background: white;
+
+    padding: 25px;
+
+    margin-top: 25px;
+
+    border-radius: 8px;
+
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+}
+
+.hospital-brand-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.hospital-brand-link:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
+.hospital-brand-link h1 {
+    color: inherit;
+}
+
+/* ERRO */
+
+.mensagem-error {
+    background-color: #fdecec;
+
+    border-color: #efb8b8;
+
+    color: #a52020;
+}
+
+/* INFORMAÇÃO */
+
+.mensagem-info {
+    background-color: #e7f3ff;
+
+    border-color: #b6d9f5;
+
+    color: #205a80;
+}
+
+/* Estado inicial de painéis controlados pelos scripts de página. */
+.inicialmente-oculto {
+    display: none;
+}

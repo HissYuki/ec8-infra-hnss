@@ -7,6 +7,7 @@ app_name = "medicos"
 
 
 urlpatterns = [
+    path('consulta/<int:consulta_id>/', views.detalhe_consulta, name='detalhe_consulta'),
 
     path(
         "",

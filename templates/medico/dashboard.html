@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
 Minha Agenda
@@ -6,11 +7,8 @@ Minha Agenda
 
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/calendarios.css' %}">
 
-<link
-    href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.css"
-    rel="stylesheet"
->
 
 {% endblock %}
 
@@ -26,7 +24,7 @@ Minha Agenda
         </h2>
 
         <p>
-            Consulte abaixo suas consultas agendadas.
+            Consulte seus horários livres, consultas e reservas de exames. Clique em uma consulta para ver o atendimento.
         </p>
 
     </div>
@@ -35,8 +33,13 @@ Minha Agenda
 
 
 <div class="calendar-card">
+    <div class="legenda-medico" aria-label="Legenda da agenda">
+        <span class="livre">Horário livre</span>
+        <span class="consulta">Consulta agendada</span>
+        <span class="exame">Exame reservado/agendado</span>
+    </div>
 
-    <div id="calendario-medico">
+    <div id="calendario-medico" data-agenda data-url-eventos="{% url 'medicos:consultas_calendario' %}">
     </div>
 
 </div>
@@ -46,85 +49,9 @@ Minha Agenda
 
 {% block extra_js %}
 
-<script
-    src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js">
-</script>
+{% include 'includes/fullcalendar_js.html' %}
 
 
-<script>
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        const elementoCalendario =
-            document.getElementById(
-                "calendario-medico"
-            );
-
-
-        const calendario =
-            new FullCalendar.Calendar(
-                elementoCalendario,
-                {
-                    initialView: "timeGridWeek",
-
-                    locale: "pt-br",
-
-                    timeZone:"local",
-
-                    height: 850,
-
-                    slotMinTime: "06:00:00",
-
-                    slotMaxTime: "20:30:00",
-
-                    slotDuration: "00:30:00",
-                    
-                    slotLabelInterval: "00:30:00",
-
-                    slotLabelFormat: {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: false
-                    },
-
-                    eventTimeFormat: {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: false
-                    },
-
-                    allDaySlot: false,
-
-                    nowIndicator: true,
-
-                    expandRows: true,
-
-                    headerToolbar: {
-                        left: "prev,next today",
-                        center: "title",
-                        right: "dayGridMonth,timeGridWeek,timeGridDay"
-                    },
-
-                    buttonText: {
-                        today: "Hoje",
-                        month: "Mês",
-                        week: "Semana",
-                        day: "Dia"
-                    },
-
-                    events:
-                        "{% url 'medicos:consultas_calendario' %}",
-                }
-            );
-
-
-        calendario.render();
-
-    }
-);
-
-</script>
+<script src="{% static 'js/agendas.js' %}"></script>
 
 {% endblock %}

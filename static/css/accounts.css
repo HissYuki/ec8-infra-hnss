@@ -1,0 +1,207 @@
+.login-container {
+    width: 100%;
+    max-width: 400px;
+
+    margin: 120px auto 80px;
+
+    padding: 65px 30px 30px;
+
+    background: white;
+
+    border-radius: 8px;
+
+    position: relative;
+
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.login-icon {
+    position: absolute;
+
+    top: -50px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 100px;
+    height: 100px;
+
+    background: white;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 15px;
+
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+.login-icon img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+}
+
+.login-container button {
+    width: 100%;
+
+    padding: 11px;
+
+    background: #1976a3;
+    color: white;
+
+    font-weight: bold;
+
+    transition: background 0.2s;
+}
+
+.login-container button:hover {
+    background: #145f83;
+}
+
+.login-links {
+    margin-top: 25px;
+
+    text-align: center;
+
+    font-size: 14px;
+}
+
+.login-links p {
+    margin-bottom: 8px;
+}
+
+.login-links a {
+    color: #087fa0;
+
+    font-weight: bold;
+
+    text-decoration: none;
+}
+
+.login-links a:hover {
+    text-decoration: underline;
+}
+
+.login-links span {
+    margin: 0 8px;
+
+    color: #999;
+}
+
+.cadastro-container {
+    width: 100%;
+    max-width: 500px;
+
+    margin: 60px auto;
+
+    padding: 35px;
+
+    background: white;
+
+    border-radius: 8px;
+
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.cadastro-container h2 {
+    margin-top: 0;
+
+    text-align: center;
+}
+
+.cadastro-descricao {
+    text-align: center;
+
+    color: #666;
+
+    margin-bottom: 30px;
+}
+
+.cadastro-container button {
+    width: 100%;
+
+    padding: 11px;
+
+    background: #1976a3;
+    color: white;
+
+    font-weight: bold;
+}
+
+.cadastro-container button:hover {
+    background: #145f83;
+}
+
+.campo-senha {
+    position: relative;
+    width: 100%;
+}
+
+.campo-senha input {
+    width: 100%;
+
+    padding: 10px 45px 10px 10px;
+}
+
+.campo-senha .mostrar-senha {
+    position: absolute;
+
+    right: 5px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    width: 38px;
+    height: 38px;
+
+    padding: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+
+    background: transparent;
+
+    cursor: pointer;
+}
+
+.icone-olho {
+    width: 22px;
+    height: 22px;
+
+    fill: #666;
+}
+
+.campo-senha .mostrar-senha:hover .icone-olho {
+    fill: #087fa0;
+}
+.auth-container .errorlist {
+    color: #b00020;
+    padding-left: 20px;
+}
+.mfa-qr {
+    display: block;
+    width: 100%;
+    max-width: 280px;
+    margin: 20px auto;
+}
+.mfa-codes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    list-style: none;
+    padding: 16px;
+    background: #f4f7f9;
+}
+.auth-continue {
+    display: inline-block;
+    background: #1976a3;
+    color: white;
+}
