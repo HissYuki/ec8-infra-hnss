@@ -1,0 +1,326 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="pt-br">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+
+        {% block title %}
+
+            Hospital Nossa Senhora da Saúde
+
+        {% endblock %}
+
+    </title>
+
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/base.css' %}"
+    >
+
+
+    {% block extra_css %}
+    {% endblock %}
+
+</head>
+
+
+<body>
+
+    <header>
+
+        <div class="container header-logado">
+
+            <!-- =========================================
+                LOGO / NOME DO HOSPITAL
+            ========================================== -->
+
+
+            <!-- PACIENTE -->
+
+            {% if user.is_authenticated and user.tipo == "PACIENTE" %}
+
+                <a
+                    href="{% url 'pacientes:dashboard' %}"
+                    class="hospital-brand hospital-brand-link"
+                >
+
+                    <img
+                        src="{% static 'images/logo.png' %}"
+                        alt="Logo Hospital Nossa Senhora da Saúde"
+                        class="hospital-logo"
+                    >
+
+                    <h1>
+                        Hospital Nossa Senhora da Saúde
+                    </h1>
+
+                </a>
+
+
+            <!-- MÉDICO -->
+
+            {% elif user.is_authenticated and user.tipo == "MEDICO" %}
+
+                <a
+                    href="{% url 'medicos:dashboard' %}"
+                    class="hospital-brand hospital-brand-link"
+                >
+
+                    <img
+                        src="{% static 'images/logo.png' %}"
+                        alt="Logo Hospital Nossa Senhora da Saúde"
+                        class="hospital-logo"
+                    >
+
+                    <h1>
+                        Hospital Nossa Senhora da Saúde
+                    </h1>
+
+                </a>
+
+
+            <!-- COORDENADOR -->
+
+            {% elif user.is_authenticated and user.tipo == "COORDENADOR" %}
+
+                <a
+                    href="{% url 'coordenador:dashboard' %}"
+                    class="hospital-brand hospital-brand-link"
+                >
+
+                    <img
+                        src="{% static 'images/logo.png' %}"
+                        alt="Logo Hospital Nossa Senhora da Saúde"
+                        class="hospital-logo"
+                    >
+
+                    <h1>
+                        Hospital Nossa Senhora da Saúde
+                    </h1>
+
+                </a>
+
+
+            <!-- ADMINISTRADOR -->
+
+            {% elif user.is_authenticated and user.is_superuser %}
+
+                <a
+                    href="{% url 'admin:index' %}"
+                    class="hospital-brand hospital-brand-link"
+                >
+
+                    <img
+                        src="{% static 'images/logo.png' %}"
+                        alt="Logo Hospital Nossa Senhora da Saúde"
+                        class="hospital-logo"
+                    >
+
+                    <h1>
+                        Hospital Nossa Senhora da Saúde
+                    </h1>
+
+                </a>
+
+
+            <!-- USUÁRIO NÃO AUTENTICADO -->
+
+            {% else %}
+
+                <a
+                    href="{% url 'inicio' %}"
+                    class="hospital-brand hospital-brand-link"
+                >
+
+                    <img
+                        src="{% static 'images/logo.png' %}"
+                        alt="Logo Hospital Nossa Senhora da Saúde"
+                        class="hospital-logo"
+                    >
+
+                    <h1>
+                        Hospital Nossa Senhora da Saúde
+                    </h1>
+
+                </a>
+
+            {% endif %}
+
+
+            <!-- =========================================
+                MENU
+            ========================================== -->
+
+            <nav>
+
+                {% if user.is_authenticated %}
+
+
+                    <!-- =================================
+                        ADMINISTRADOR
+                    ================================== -->
+
+                    {% if user.is_superuser %}
+
+                        <a href="{% url 'admin:index' %}">
+                            Administração
+                        </a>
+
+
+                    <!-- =================================
+                        PACIENTE
+                    ================================== -->
+
+                    {% elif user.tipo == "PACIENTE" %}
+
+                        <a href="{% url 'pacientes:consultas' %}">
+                            Consulta
+                        </a>
+
+                        <a href="{% url 'pacientes:exames' %}">
+                            Exame
+                        </a>
+
+                        <a href="{% url 'pacientes:meus_dados' %}">
+                            Meus dados
+                        </a>
+
+
+                    <!-- =================================
+                        MÉDICO
+                    ================================== -->
+
+                    {% elif user.tipo == "MEDICO" %}
+
+                        <a href="{% url 'medicos:dashboard' %}">
+                            Minha agenda
+                        </a>
+
+                        <a href="{% url 'medicos:disponibilidade' %}">
+                            Minha disponibilidade
+                        </a>
+
+
+                    <!-- =================================
+                        COORDENADOR
+                    ================================== -->
+
+                    {% elif user.tipo == "COORDENADOR" %}
+
+                        <a href="{% url 'coordenador:dashboard' %}">
+                            Agenda
+                        </a>
+
+                        <a href="{% url 'coordenador:disponibilidade' %}">
+                            Disponibilidade
+                        </a>
+
+                    {% endif %}
+
+
+                    <!-- =================================
+                        SAIR
+                    ================================== -->
+
+                    <form
+                        method="post"
+                        action="{% url 'accounts:logout' %}"
+                        class="logout-form"
+                    >
+
+                        {% csrf_token %}
+
+                        <button type="submit">
+                            Sair
+                        </button>
+
+                    </form>
+
+
+                {% else %}
+
+
+                    <!-- =================================
+                        MENU PÚBLICO
+                    ================================== -->
+
+                    <a href="{% url 'accounts:login_paciente' %}">
+                        Área do Paciente
+                    </a>
+
+                    <a href="{% url 'accounts:login_medico' %}">
+                        Área dos Profissionais
+                    </a>
+
+
+                {% endif %}
+
+            </nav>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================
+        CONTEÚDO PRINCIPAL
+    ========================================== -->
+
+    <main class="container">
+
+
+        <!-- =====================================
+            MENSAGENS DO DJANGO
+        ====================================== -->
+
+        {% if messages %}
+
+            <div class="mensagens">
+
+                {% for message in messages %}
+
+                    <div
+                        class="mensagem mensagem-{{ message.tags }}"
+                    >
+
+                        {{ message }}
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- =====================================
+            CONTEÚDO DA PÁGINA
+        ====================================== -->
+
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+
+    <script src="{% static 'js/base.js' %}"></script>
+
+    {% block extra_js %}
+    {% endblock %}
+
+</body>
+
+</html>

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/accounts.css' %}">
+{% endblock %}
+{% block content %}
+<section class="cadastro-container auth-container">
+    {% block auth_content %}{% endblock %}
+</section>
+{% endblock %}

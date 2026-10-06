@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Minha Agenda
+{% endblock %}
+
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/calendarios.css' %}">
+
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="dashboard-header">
+
+    <div>
+
+        <h2>
+            Agenda do Dr(a). {{ user.get_full_name }}
+        </h2>
+
+        <p>
+            Consulte seus horários livres, consultas e reservas de exames. Clique em uma consulta para ver o atendimento.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="calendar-card">
+    <div class="legenda-medico" aria-label="Legenda da agenda">
+        <span class="livre">Horário livre</span>
+        <span class="consulta">Consulta agendada</span>
+        <span class="exame">Exame reservado/agendado</span>
+    </div>
+
+    <div id="calendario-medico" data-agenda data-url-eventos="{% url 'medicos:consultas_calendario' %}">
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+{% include 'includes/fullcalendar_js.html' %}
+
+
+<script src="{% static 'js/agendas.js' %}"></script>
+
+{% endblock %}

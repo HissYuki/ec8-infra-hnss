@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Meus Dados
+{% endblock %}
+
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pacientes.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="dados-container">
+
+    <h2>
+        Meus dados
+    </h2>
+
+    <p>
+        Atualize suas informações pessoais.
+    </p>
+
+
+    <form method="post">
+
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+
+        <div class="campo">
+
+            <label>
+                Nome
+            </label>
+
+            {{ form.first_name }}
+            {{ form.first_name.errors }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Sobrenome
+            </label>
+
+            {{ form.last_name }}
+            {{ form.last_name.errors }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                E-mail
+            </label>
+
+            {{ form.email }}
+            {{ form.email.errors }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Telefone
+            </label>
+
+            {{ form.telefone }}
+            {{ form.telefone.errors }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Data de nascimento
+            </label>
+
+            {{ form.data_nascimento }}
+            {{ form.data_nascimento.errors }}
+
+        </div>
+
+
+        <button type="submit">
+            Salvar alterações
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,692 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/disponibilidade.css' %}">
+<link rel="stylesheet" href="{% static 'css/coordenador/disponibilidade.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="pagina-disponibilidade">
+
+    <!-- ==================================================
+         TÍTULO
+    =================================================== -->
+
+    <div class="cabecalho-pagina">
+
+        <h1>
+            Disponibilidade de exames
+        </h1>
+
+        <p>
+            Defina o exame, o médico responsável e os horários
+            em que o exame poderá ser realizado.
+        </p>
+
+    </div>
+
+
+    <!-- ==================================================
+         CARD - ADICIONAR HORÁRIOS
+    =================================================== -->
+
+    <div class="card-disponibilidade">
+
+        <h2>
+            Adicionar horários
+        </h2>
+
+
+        <!-- ==============================================
+             BOTÕES DAS ABAS
+        =============================================== -->
+
+        <div class="botoes-abas">
+
+            <button
+                type="button"
+                id="btn-diaria"
+                class="botao-aba
+                {% if aba_ativa == 'diaria' %}ativo{% endif %}"
+                data-mostrar-aba="aba-diaria" data-classe-ativa="ativo"
+            >
+                Adicionar disponibilidade (diária)
+            </button>
+
+
+            <button
+                type="button"
+                id="btn-semanal"
+                class="botao-aba
+                {% if aba_ativa == 'semanal' %}ativo{% endif %}"
+                data-mostrar-aba="aba-semanal" data-classe-ativa="ativo"
+            >
+                Adicionar horário (semanal / mensal)
+            </button>
+
+        </div>
+
+
+        <!-- ==================================================
+             FORMULÁRIO DIÁRIO
+        =================================================== -->
+
+        <div
+            id="aba-diaria"
+            class="conteudo-aba{% if aba_ativa != "diaria" %} inicialmente-oculto{% endif %}"
+
+        >
+
+            <h3>
+                Disponibilidade de um dia
+            </h3>
+
+            <p class="descricao-formulario">
+                Escolha o exame, o médico responsável, a data e o
+                período desejado. Os horários serão criados em
+                intervalos de 30 minutos.
+            </p>
+
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <input
+                    type="hidden"
+                    name="tipo_formulario"
+                    value="diaria"
+                >
+
+
+                <!-- EXAME -->
+
+                <div class="campo">
+
+                    <label for="{{ form_diario.exame.id_for_label }}">
+                        {{ form_diario.exame.label }}
+                    </label>
+
+                    {{ form_diario.exame }}
+
+                    {% for erro in form_diario.exame.errors %}
+
+                        <div class="erro-campo">
+                            {{ erro }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- MÉDICO -->
+
+                <div class="campo">
+
+                    <label for="{{ form_diario.medico_responsavel.id_for_label }}">
+                        {{ form_diario.medico_responsavel.label }}
+                    </label>
+
+                    {{ form_diario.medico_responsavel }}
+
+                    {% for erro in form_diario.medico_responsavel.errors %}
+
+                        <div class="erro-campo">
+                            {{ erro }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- DATA -->
+
+                <div class="campo">
+
+                    <label for="{{ form_diario.data.id_for_label }}">
+                        {{ form_diario.data.label }}
+                    </label>
+
+                    {{ form_diario.data }}
+
+                    {% for erro in form_diario.data.errors %}
+
+                        <div class="erro-campo">
+                            {{ erro }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- HORÁRIO INICIAL -->
+
+                <div class="campo">
+
+                    <label for="{{ form_diario.hora_inicio.id_for_label }}">
+                        {{ form_diario.hora_inicio.label }}
+                    </label>
+
+                    {{ form_diario.hora_inicio }}
+
+                    {% for erro in form_diario.hora_inicio.errors %}
+
+                        <div class="erro-campo">
+                            {{ erro }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- HORÁRIO FINAL -->
+
+                <div class="campo">
+
+                    <label for="{{ form_diario.hora_fim.id_for_label }}">
+                        {{ form_diario.hora_fim.label }}
+                    </label>
+
+                    {{ form_diario.hora_fim }}
+
+                    {% for erro in form_diario.hora_fim.errors %}
+
+                        <div class="erro-campo">
+                            {{ erro }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- ERROS GERAIS -->
+
+                {% if form_diario.non_field_errors %}
+
+                    <div class="erro-formulario">
+
+                        {% for erro in form_diario.non_field_errors %}
+
+                            <p>
+                                {{ erro }}
+                            </p>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+
+                <button
+                    type="submit"
+                    class="botao-principal"
+                >
+                    Adicionar
+                </button>
+
+            </form>
+
+        </div>
+
+
+        <!-- ==================================================
+             FORMULÁRIO SEMANAL / MENSAL
+        =================================================== -->
+
+        <div
+            id="aba-semanal"
+            class="conteudo-aba{% if aba_ativa != "semanal" %} inicialmente-oculto{% endif %}"
+
+        >
+
+            <h3>
+                Disponibilidade semanal / mensal
+            </h3>
+
+            <p class="descricao-formulario">
+                Escolha o exame, o médico responsável, o período,
+                os dias da semana e os horários em que o exame
+                será disponibilizado.
+            </p>
+
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <input
+                    type="hidden"
+                    name="tipo_formulario"
+                    value="semanal"
+                >
+
+
+                <!-- EXAME -->
+
+                <div class="campo">
+
+                    <label for="{{ form_semanal.exame.id_for_label }}">
+                        {{ form_semanal.exame.label }}
+                    </label>
+
+                    {{ form_semanal.exame }}
+
+                    {% for erro in form_semanal.exame.errors %}
+
+                        <div class="erro-campo">
+                            {{ erro }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- MÉDICO -->
+
+                <div class="campo">
+
+                    <label for="{{ form_semanal.medico_responsavel.id_for_label }}">
+                        {{ form_semanal.medico_responsavel.label }}
+                    </label>
+
+                    {{ form_semanal.medico_responsavel }}
+
+                    {% for erro in form_semanal.medico_responsavel.errors %}
+
+                        <div class="erro-campo">
+                            {{ erro }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- DATA INICIAL -->
+
+                <div class="campo">
+
+                    <label for="{{ form_semanal.data_inicio.id_for_label }}">
+                        {{ form_semanal.data_inicio.label }}
+                    </label>
+
+                    {{ form_semanal.data_inicio }}
+
+                    {% for erro in form_semanal.data_inicio.errors %}
+
+                        <div class="erro-campo">
+                            {{ erro }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- DATA FINAL -->
+
+                <div class="campo">
+
+                    <label for="{{ form_semanal.data_fim.id_for_label }}">
+                        {{ form_semanal.data_fim.label }}
+                    </label>
+
+                    {{ form_semanal.data_fim }}
+
+                    {% for erro in form_semanal.data_fim.errors %}
+
+                        <div class="erro-campo">
+                            {{ erro }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- DIAS DA SEMANA -->
+
+                <div class="campo">
+
+                    <label class="titulo-dias-semana">
+                        Dias da semana
+                    </label>
+
+                    <p class="ajuda-dias-semana">
+                        Selecione os dias em que este exame deverá
+                        ficar disponível.
+                    </p>
+
+
+                    <div class="dias-semana-grid">
+
+                        {% for checkbox in form_semanal.dias_semana %}
+
+                            <label
+                                class="dia-semana-card"
+                                for="{{ checkbox.id_for_label }}"
+                            >
+
+                                {{ checkbox.tag }}
+
+                                <span class="nome-dia">
+                                    {{ checkbox.choice_label }}
+                                </span>
+
+                            </label>
+
+                        {% endfor %}
+
+                    </div>
+
+
+                    {% for erro in form_semanal.dias_semana.errors %}
+
+                        <div class="erro-campo">
+                            {{ erro }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- HORÁRIO INICIAL -->
+
+                <div class="campo">
+
+                    <label for="{{ form_semanal.hora_inicio.id_for_label }}">
+                        {{ form_semanal.hora_inicio.label }}
+                    </label>
+
+                    {{ form_semanal.hora_inicio }}
+
+                    {% for erro in form_semanal.hora_inicio.errors %}
+
+                        <div class="erro-campo">
+                            {{ erro }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- HORÁRIO FINAL -->
+
+                <div class="campo">
+
+                    <label for="{{ form_semanal.hora_fim.id_for_label }}">
+                        {{ form_semanal.hora_fim.label }}
+                    </label>
+
+                    {{ form_semanal.hora_fim }}
+
+                    {% for erro in form_semanal.hora_fim.errors %}
+
+                        <div class="erro-campo">
+                            {{ erro }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- ERROS GERAIS -->
+
+                {% if form_semanal.non_field_errors %}
+
+                    <div class="erro-formulario">
+
+                        {% for erro in form_semanal.non_field_errors %}
+
+                            <p>
+                                {{ erro }}
+                            </p>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+
+                <button
+                    type="submit"
+                    class="botao-principal"
+                >
+                    Adicionar
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         HORÁRIOS JÁ CADASTRADOS
+    =================================================== -->
+
+    <div class="card-disponibilidade horarios-cadastrados">
+
+        <h2>
+            Horários cadastrados
+        </h2>
+
+
+        <!-- ==============================================
+             FILTRO POR DIA
+        =============================================== -->
+
+        {% if datas_disponiveis %}
+
+            <div class="campo campo-data-listagem">
+
+                <label for="data-selecionada">
+                    Visualizar dia
+                </label>
+
+                <select
+                    id="data-selecionada"
+                    data-filter-date
+                >
+
+                    {% for data in datas_disponiveis %}
+
+                        <option
+                            value="{{ data|date:'Y-m-d' }}"
+                            {% if data == data_selecionada %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ data|date:"d/m/Y" }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- ==============================================
+             TABELA
+        =============================================== -->
+
+        <div class="tabela-container">
+
+            <table class="tabela-horarios">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Horário
+                        </th>
+
+                        <th>
+                            Exame
+                        </th>
+
+                        <th>
+                            Médico responsável
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Ação
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for horario in horarios %}
+
+                        <tr>
+
+                            <!-- HORÁRIO -->
+
+                            <td>
+
+                                {{ horario.data_hora|date:"H:i" }}
+
+                            </td>
+
+
+                            <!-- EXAME -->
+
+                            <td>
+
+                                {{ horario.exame.nome }}
+
+                            </td>
+
+
+                            <!-- MÉDICO -->
+
+                            <td>
+
+                                {% if horario.medico_responsavel.usuario.get_full_name %}
+
+                                    {{ horario.medico_responsavel.usuario.get_full_name }}
+
+                                {% else %}
+
+                                    {{ horario.medico_responsavel.usuario.username }}
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- STATUS -->
+
+                            <td>
+
+                                {% if horario.ativo %}
+
+                                    <span class="status status-disponivel">
+                                        Disponível
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="status status-agendado">
+                                        Agendado
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- AÇÃO -->
+
+                            <td>
+
+                                {% if horario.ativo %}
+
+                                    <form
+                                        method="post"
+                                        action="{% url 'coordenador:remover_horario' horario.id %}"
+                                        class="form-remover"
+                                    >
+
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                            class="botao-remover"
+                                            data-confirm-click="Deseja realmente remover este horário?"
+                                        >
+                                            Remover
+                                        </button>
+
+                                    </form>
+
+                                {% else %}
+
+                                    <span class="sem-acao">
+                                        -
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="5"
+                                class="nenhum-horario"
+                            >
+                                Nenhum horário cadastrado para este dia.
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/disponibilidade.js' %}"></script>
+{% endblock %}

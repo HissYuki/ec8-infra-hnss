@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}
+Dados do Paciente
+{% endblock %}
+
+
+{% block content %}
+
+<h2>
+    Dados do paciente
+</h2>
+
+
+<div class="card">
+
+    <p>
+        <strong>Nome:</strong>
+
+        {{ paciente.usuario.get_full_name }}
+    </p>
+
+
+    <p>
+        <strong>E-mail:</strong>
+
+        {{ paciente.usuario.email }}
+    </p>
+
+
+    <p>
+        <strong>Telefone:</strong>
+
+        {{ paciente.telefone }}
+    </p>
+
+
+    <p>
+        <strong>Data de nascimento:</strong>
+
+        {{ paciente.data_nascimento|date:"d/m/Y" }}
+    </p>
+
+</div>
+
+
+<a href="{% url 'medicos:dashboard' %}">
+    Voltar para agenda
+</a>
+
+{% endblock %}

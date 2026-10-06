@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Exames
+{% endblock %}
+
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pacientes.css' %}">
+<link rel="stylesheet" href="{% static 'css/calendarios.css' %}">
+
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<div class="dashboard-header">
+
+    <h2>
+        Agendar exame
+    </h2>
+
+    <p>
+        Escolha o exame desejado e selecione um horário disponível.
+    </p>
+
+</div>
+
+
+<div class="acoes">
+
+    <a
+        href="{% url 'pacientes:dashboard' %}"
+        class="botao"
+    >
+        Voltar
+    </a>
+
+</div>
+
+
+<!-- =====================================================
+     AGENDAMENTO
+===================================================== -->
+
+<div class="dashboard-card">
+
+    <div class="campo">
+
+        <label for="exame-select">
+            Exame
+        </label>
+
+
+        <select id="exame-select">
+
+            <option value="">
+                Selecione um exame
+            </option>
+
+
+            {% for exame in exames %}
+
+                <option value="{{ exame.id }}">
+                    {{ exame.nome }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+
+    <div
+        id="mensagem-calendario"
+        class="mensagem-calendario"
+    >
+        Selecione um exame para visualizar os horários disponíveis.
+    </div>
+
+
+    <div id="calendario-exame"
+        data-agendamento
+        data-seletor="exame-select"
+        data-url-horarios="{% url 'pacientes:horarios_exame_disponiveis' 0 %}"
+        data-url-agendamento="{% url 'pacientes:agendar_exame' 0 %}"
+        data-mensagem-selecao="Selecione um exame para visualizar os horários."
+        data-mensagem-vazia="Este exame não possui horários disponíveis no momento."
+        data-mensagem-confirmacao="Deseja agendar este exame para "
+        data-aba-passados="aba-passados"
+        data-lista-atuais="exames-atuais"
+        data-lista-passados="exames-passados">
+    </div>
+
+
+    <form
+        id="form-agendamento"
+        method="post"
+    >
+
+        {% csrf_token %}
+
+    </form>
+
+</div>
+
+
+<!-- =====================================================
+     MEUS EXAMES
+===================================================== -->
+
+<div class="dashboard-card">
+
+    <h3>
+        Meus exames
+    </h3>
+
+
+    <div class="abas-consultas">
+
+        <button
+            type="button"
+            id="aba-atuais"
+            class="aba-consulta ativa"
+        >
+            Exames atuais
+        </button>
+
+
+        <button
+            type="button"
+            id="aba-passados"
+            class="aba-consulta"
+        >
+            Exames passados
+        </button>
+
+    </div>
+
+
+    <!-- EXAMES ATUAIS -->
+
+    <div id="exames-atuais">
+
+        {% if exames_atuais %}
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Exame</th>
+                        <th>Data</th>
+                        <th>Horário</th>
+                        <th>Ação</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for agendamento in exames_atuais %}
+
+                        <tr>
+
+                            <td>
+                                {{ agendamento.exame.nome }}
+                            </td>
+
+                            <td>
+                                {{ agendamento.data_hora|date:"d/m/Y" }}
+                            </td>
+
+                            <td>
+                                {{ agendamento.data_hora|date:"H:i" }}
+                            </td>
+
+                            <td>
+
+                                <form
+                                    method="post"
+                                    action="{% url 'pacientes:cancelar_exame' agendamento.id %}"
+                                    data-confirm-submit="Deseja realmente cancelar este exame?"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="botao-cancelar"
+                                    >
+                                        Cancelar
+                                    </button>
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+
+        {% else %}
+
+            <p>
+                Você não possui exames futuros agendados.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- EXAMES PASSADOS -->
+
+    <div class="inicialmente-oculto"
+        id="exames-passados"
+
+    >
+
+        {% if exames_passados %}
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Exame</th>
+                        <th>Data</th>
+                        <th>Horário</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for agendamento in exames_passados %}
+
+                        <tr>
+
+                            <td>
+                                {{ agendamento.exame.nome }}
+                            </td>
+
+                            <td>
+                                {{ agendamento.data_hora|date:"d/m/Y" }}
+                            </td>
+
+                            <td>
+                                {{ agendamento.data_hora|date:"H:i" }}
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+
+        {% else %}
+
+            <p>
+                Você ainda não possui exames anteriores.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+{% include 'includes/fullcalendar_js.html' %}
+
+
+<script src="{% static 'js/agendamentos.js' %}"></script>
+
+{% endblock %}

@@ -1,33 +1,72 @@
 services:
   nginx-proxy:
     build: ./proxy
-    container_name: dmz-nginx-proxy
     ports:
-      - "8080:80"
-      - "8443:443"
-    networks:
-      - vlan10
+      - "${DMZ_BIND_IP:?Defina a interface DMZ}:${PUBLIC_HTTP_PORT:-80}:80"
+      - "${DMZ_BIND_IP:?Defina a interface DMZ}:${PUBLIC_HTTPS_PORT:-443}:443"
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST:?Defina o hostname público}
+      PUBLIC_HTTPS_SUFFIX: ${PUBLIC_HTTPS_SUFFIX:-}
+    volumes:
+      - ${TLS_DIR:?Defina TLS_DIR}/public.crt:/run/tls/public.crt:ro
+      - ${TLS_DIR:?Defina TLS_DIR}/public.key:/run/tls/public.key:ro
+    networks: [vlan10]
+    depends_on: [modsecurity-waf]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
   
   modsecurity-waf:
-    image: owasp/modsecurity-crs:nginx
-    container_name: dmz-modsecurity-waf
+    # Digest da imagem já validada; atualização exige nova validação do WAF.
+    image: owasp/modsecurity-crs:nginx@sha256:133267aa811e1a57a23b52ef04b3c30e802bcbe5454588f6d6af1f69f4b2b667
     environment:
-      - PROXY_SSL=0
-      - BACKEND=http://dmz-nginx-web:80
+      BACKEND: http://nginx-web:80
+      PORT: '8080'
+      PROXY_HOST_HEADER: '$$http_host'
+      NGINX_X_FORWARDED_PROTO: https
+      MODSEC_RULE_ENGINE: 'On'
+      MODSEC_AUDIT_ENGINE: 'Off'
+      ACCESSLOG: /dev/null
+      ERRORLOG: /dev/null
+    # O Nginx resolve o upstream ao iniciar: conectar primeiro à rede do frontend.
     networks:
-      - vlan10
+      frontend_link:
+        priority: 1000
+      vlan10:
+        priority: 0
+    depends_on: [nginx-web]
+    restart: unless-stopped
   
   nginx-web:
-    image: nginx:alpine
-    container_name: dmz-nginx-web
+    build:
+      context: ./frontend
+      additional_contexts:
+        backend_source: ../rede-interna/backend
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST:?Defina PUBLIC_HOST}
+      BACKEND_URL: ${BACKEND_URL:?Defina a URL HTTPS da Rede Interna}
+      BACKEND_TLS_NAME: ${BACKEND_TLS_NAME:?Defina o nome no certificado backend}
     volumes:
-      - ./html:/usr/share/nginx/html:ro
-    networks:
-      - vlan10
+      - ${TLS_DIR:?Defina TLS_DIR}/backend-ca.crt:/run/tls/backend-ca.crt:ro
+      - ${TLS_DIR:?Defina TLS_DIR}/frontend.crt:/run/tls/frontend.crt:ro
+      - ${TLS_DIR:?Defina TLS_DIR}/frontend.key:/run/tls/frontend.key:ro
+    networks: [frontend_link, backend_egress]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
 
 networks:
+  # Bridges locais, não VLANs físicas; faixas separadas das interfaces reais.
   vlan10:
     driver: bridge
     ipam:
-      config:
-        - subnet: 192.168.10.0/24
+      config: [{subnet: "${DMZ_DOCKER_SUBNET:-172.28.10.0/24}"}]
+  frontend_link:
+    driver: bridge
+    internal: true
+  backend_egress:
+    driver: bridge
+    ipam:
+      config: [{subnet: "${FRONTEND_EGRESS_SUBNET:-172.28.11.0/24}"}]

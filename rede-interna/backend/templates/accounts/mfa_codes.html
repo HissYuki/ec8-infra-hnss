@@ -1,0 +1,9 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Guardar códigos de recuperação{% endblock %}
+{% block auth_content %}
+<h2>MFA ativado</h2>
+<p>Guarde estes códigos em um local seguro, separado do autenticador. Eles são exibidos apenas nesta confirmação. Cada código permite recuperar o MFA uma única vez.</p>
+<ul class="mfa-codes">{% for code in codes %}<li><code>{{ code }}</code></li>{% endfor %}</ul>
+<p>Ao substituir o autenticador, os códigos anteriores deixam de funcionar.</p>
+<a class="botao auth-continue" href="{% url 'accounts:mfa_finish' %}">Já guardei os códigos; continuar</a>
+{% endblock %}

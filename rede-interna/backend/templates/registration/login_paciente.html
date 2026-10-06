@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Login do Paciente
+{% endblock %}
+
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/accounts.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="login-container">
+
+    <div class="login-icon">
+
+        <img
+            src="{% static 'images/user.png' %}"
+            alt="Ícone de usuário"
+        >
+
+    </div>
+
+
+    <h2>
+        Área do Paciente
+    </h2>
+
+
+    {% if form.errors %}
+
+        <div class="erro">
+
+            {% for field in form %}
+
+                {% for error in field.errors %}
+
+                    <p>
+                        {{ error }}
+                    </p>
+
+                {% endfor %}
+
+            {% endfor %}
+
+
+            {% for error in form.non_field_errors %}
+
+                <p>
+                    {{ error }}
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+
+    <form method="post">
+
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+
+        <div class="campo">
+
+            <label>
+                Usuário
+            </label>
+
+            {{ form.username }}
+
+        </div>
+
+
+        <div class="campo">
+
+            <label>
+                Senha
+            </label>
+
+            {{ form.password }}
+
+        </div>
+
+
+        <button type="submit">
+            Entrar
+        </button>
+
+    </form>
+
+
+    <div class="login-links">
+        <p><a href="{% url 'accounts:password_reset' %}">Esqueci minha senha</a></p>
+
+        <p>
+            Ainda não possui uma conta?
+        </p>
+
+        <a href="{% url 'accounts:registrar_paciente' %}">
+            Criar conta
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}
