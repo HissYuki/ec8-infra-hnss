@@ -28,7 +28,12 @@ services:
       MODSEC_AUDIT_ENGINE: 'Off'
       ACCESSLOG: /dev/null
       ERRORLOG: /dev/null
-    networks: [vlan10, frontend_link]
+    # O Nginx resolve o upstream ao iniciar: conectar primeiro à rede do frontend.
+    networks:
+      frontend_link:
+        priority: 1000
+      vlan10:
+        priority: 0
     depends_on: [nginx-web]
     restart: unless-stopped
   nginx-web:

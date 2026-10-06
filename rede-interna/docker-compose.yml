@@ -34,7 +34,12 @@ services:
       - ${TLS_DIR:?Defina TLS_DIR}/backend.crt:/run/tls/backend.crt:ro
       - ${TLS_DIR:?Defina TLS_DIR}/backend.key:/run/tls/backend.key:ro
       - ${TLS_DIR:?Defina TLS_DIR}/client-ca.crt:/run/tls/client-ca.crt:ro
-    networks: [vlan20, db_app]
+    # Comandos pontuais (migrate) precisam resolver PostgreSQL desde o primeiro instante.
+    networks:
+      db_app:
+        priority: 1000
+      vlan20:
+        priority: 0
     depends_on:
       postgresql:
         condition: service_healthy

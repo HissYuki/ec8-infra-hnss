@@ -14,6 +14,14 @@ function Compose-Internal {
 function Compose-Dmz {
     Invoke-Docker compose --project-name hospital-dmz --env-file $envPath -f "$projectRoot/dmz/docker-compose.yml" -f "$projectRoot/dmz/compose.local.yaml" @args
 }
+function Set-TestDatabasePermission {
+    param([ValidateSet('CREATEDB','NOCREATEDB')][string]$Permission)
+    # Envia o script pelo stdin: evita aspas SQL aninhadas nos argumentos do Windows.
+    $roleScript = [IO.File]::ReadAllText("$PSScriptRoot/test-db-role.sh").Replace("`r`n", "`n")
+    # O pipeline do PowerShell 5.1 acrescenta CRLF; normaliza também dentro do container.
+    $roleScript | & docker compose --project-name hospital-interna --env-file $envPath -f "$projectRoot/rede-interna/docker-compose.yml" -f "$projectRoot/rede-interna/compose.local.yaml" exec -T postgresql sh -c 'tr -d \\r | sh -s -- $1' -- $Permission
+    if ($LASTEXITCODE -ne 0) { throw "Falha ao ajustar a permissão de testes: $Permission" }
+}
 if ($Action -in @('prepare','up','dev')) {
     if (!(Test-Path $envPath)) {
         $content = [IO.File]::ReadAllText("$projectRoot/.env.example")
@@ -30,8 +38,10 @@ if ($Action -in @('prepare','up','dev')) {
     }
     New-Item -ItemType Directory -Force $tlsPath | Out-Null
     Invoke-Docker run --rm --mount "type=bind,source=$tlsPath,target=/certs" --mount "type=bind,source=$PSScriptRoot/certificates.sh,target=/certificates.sh,readonly" alpine:3.22 sh -c 'apk add --no-cache openssl >/dev/null && sh /certificates.sh'
-    & docker network inspect hospital-local-transit *> $null
-    if ($LASTEXITCODE -ne 0) { Invoke-Docker network create --internal hospital-local-transit }
+    # Listar não gera erro quando a rede ainda não existe (PowerShell 5.1).
+    $localNetworks = & docker network ls --format '{{.Name}}'
+    if ($LASTEXITCODE -ne 0) { throw 'Não foi possível consultar as redes Docker.' }
+    if ($localNetworks -notcontains 'hospital-local-transit') { Invoke-Docker network create --internal hospital-local-transit }
 }
 switch ($Action) {
     prepare { Write-Host 'Configuração local preparada. Chaves e .env fora do Git.' }
@@ -63,8 +73,10 @@ switch ($Action) {
         Compose-Internal exec -T backend python manage.py check
         Compose-Internal exec -T backend python manage.py makemigrations --check --dry-run
         # Banco de testes separado; somente durante esta execução recebe CREATEDB.
-        Compose-Internal exec -T postgresql sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "ALTER ROLE \"$APP_USER\" CREATEDB"'
-        try { Compose-Internal exec -T backend python manage.py test --noinput --settings=config.test_settings }
-        finally { Compose-Internal exec -T postgresql sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "ALTER ROLE \"$APP_USER\" NOCREATEDB"' }
+        try {
+            Set-TestDatabasePermission CREATEDB
+            Compose-Internal exec -T backend python manage.py test --noinput --settings=config.test_settings
+        }
+        finally { Set-TestDatabasePermission NOCREATEDB }
     }
 }
