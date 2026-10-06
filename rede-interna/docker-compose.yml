@@ -21,7 +21,7 @@ services:
     image: postgres:15-alpine
     container_name: dados-postgres
     environment:
-      POSTGRES_USER: admin
+      POSTGRES_USER: app_admin
       POSTGRES_PASSWORD: teste
       POSTGRES_DB: dados_db
     volumes:
@@ -29,6 +29,38 @@ services:
     networks:
       - vlan20
     restart: unless-stopped
+
+  postgresql-keycloak:
+    image: postgres:15-alpine
+    container_name: dados-postgres-keycloak
+    environment:
+      POSTGRES_USER: keycloak_admin
+      POSTGRES_PASSWORD: teste
+      POSTGRES_DB: keycloak_db
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+    networks:
+      - vlan20
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: seguranca-keycloak
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://dados-postgres-keycloak:5432/keycloak_db
+      KC_DB_USERNAME: keycloak_admin
+      KC_DB_PASSWORD: teste
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    networks:
+      - vlan20
+      - vlan30
+    restart: unless-stopped
+
 
 networks:
   vlan20:
@@ -52,4 +84,5 @@ networks:
 volumes:
   vault_data:
   vault_config:
+  keycloak_db_data:
   postgres_data:

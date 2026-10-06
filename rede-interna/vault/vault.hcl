@@ -1,5 +1,5 @@
 ui = true
-disable_mlock = false
+disable_mlock = true
 disable_clustering = true
 api_addr = "http://127.0.0.1:8200"
 
