@@ -5,9 +5,9 @@ VAULT_PID=$!
 echo "Aguardando o KMS Vault iniciar..."
 sleep 5
 
-vault operator unseal fTUyGMckWE7IgHC1qddqVhk77p21t8WtbBhwXTb63O2x
-vault operator unseal c+r5X1YSGh/rAnPywoyHK6MkNAz1CD71i7l8GbTyZTgq
-vault operator unseal azZn5ALuNtB70RzIIW4rQledqrm+2pByL/H6oVxK7pVX
+vault operator unseal ZJyQanZUVwJwxCibO3Jd8e6kBAWXQID4wiXsZXqgqL+A
+vault operator unseal VwGDLA5pBaBgEwzNw/iwITJW8wwH0x3fh7Qov98u1s2P
+vault operator unseal h6cXzd9l1Hr1xT9O9TFUIDTv6I+wYs4JfvP7yQAObW1O
 
 echo "KMS Vault destrancado!"
 

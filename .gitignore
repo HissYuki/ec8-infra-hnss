@@ -244,3 +244,5 @@ integration/tls/
 staticfiles/
 dmz/certs/
 rede-interna/certs/
+rede-intern/kms/start-kms.sh
+rede-interna/vault/vault.hcl

@@ -9,17 +9,17 @@ function Invoke-Docker {
     if ($LASTEXITCODE -ne 0) { throw "Docker falhou: $($args[0])" }
 }
 function Compose-Internal {
-    Invoke-Docker compose --project-name hospital-interna --env-file $envPath -f "$projectRoot/rede-interna/docker-compose.yml" -f "$projectRoot/rede-interna/compose.local.yaml" @args
+    Invoke-Docker compose --project-name rede-interna --env-file $envPath -f "$projectRoot/rede-interna/docker-compose.yml" -f "$projectRoot/rede-interna/compose.local.yaml" @args
 }
 function Compose-Dmz {
-    Invoke-Docker compose --project-name hospital-dmz --env-file $envPath -f "$projectRoot/dmz/docker-compose.yml" -f "$projectRoot/dmz/compose.local.yaml" @args
+    Invoke-Docker compose --project-name dmz --env-file $envPath -f "$projectRoot/dmz/docker-compose.yml" -f "$projectRoot/dmz/compose.local.yaml" @args
 }
 function Set-TestDatabasePermission {
     param([ValidateSet('CREATEDB','NOCREATEDB')][string]$Permission)
     # Envia o script pelo stdin: evita aspas SQL aninhadas nos argumentos do Windows.
     $roleScript = [IO.File]::ReadAllText("$PSScriptRoot/test-db-role.sh").Replace("`r`n", "`n")
     # O pipeline do PowerShell 5.1 acrescenta CRLF; normaliza também dentro do container.
-    $roleScript | & docker compose --project-name hospital-interna --env-file $envPath -f "$projectRoot/rede-interna/docker-compose.yml" -f "$projectRoot/rede-interna/compose.local.yaml" exec -T postgresql sh -c 'tr -d \\r | sh -s -- $1' -- $Permission
+    $roleScript | & docker compose --project-name rede-interna --env-file $envPath -f "$projectRoot/rede-interna/docker-compose.yml" -f "$projectRoot/rede-interna/compose.local.yaml" exec -T postgresql sh -c 'tr -d \\r | sh -s -- $1' -- $Permission
     if ($LASTEXITCODE -ne 0) { throw "Falha ao ajustar a permissão de testes: $Permission" }
 }
 if ($Action -in @('prepare','up','dev')) {
@@ -50,13 +50,13 @@ switch ($Action) {
         Compose-Internal build backend
         Compose-Internal run --rm --no-deps backend python manage.py migrate --noinput
         if ($Action -eq 'dev') {
-            Invoke-Docker compose --project-name hospital-interna --env-file $envPath -f "$projectRoot/rede-interna/docker-compose.yml" -f "$projectRoot/rede-interna/compose.local.yaml" -f "$projectRoot/rede-interna/compose.dev.yaml" up -d --force-recreate --wait backend
+            Invoke-Docker compose --project-name rede-interna --env-file $envPath -f "$projectRoot/rede-interna/docker-compose.yml" -f "$projectRoot/rede-interna/compose.local.yaml" -f "$projectRoot/rede-interna/compose.dev.yaml" up -d --force-recreate --wait backend
         } else {
             Compose-Internal up -d --force-recreate --wait backend
         }
         # Vault, Keycloak e seu banco pertencem à infraestrutura padrão.
         if ($Action -eq 'dev') {
-            Invoke-Docker compose --project-name hospital-interna --env-file $envPath -f "$projectRoot/rede-interna/docker-compose.yml" -f "$projectRoot/rede-interna/compose.local.yaml" -f "$projectRoot/rede-interna/compose.dev.yaml" up -d --wait --wait-timeout 180
+            Invoke-Docker compose --project-name rede-interna --env-file $envPath -f "$projectRoot/rede-interna/docker-compose.yml" -f "$projectRoot/rede-interna/compose.local.yaml" -f "$projectRoot/rede-interna/compose.dev.yaml" up -d --wait --wait-timeout 180
         } else {
             Compose-Internal up -d --wait --wait-timeout 180
         }
