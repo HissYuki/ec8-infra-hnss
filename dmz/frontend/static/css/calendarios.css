@@ -1,0 +1,44 @@
+.horario-disponivel {
+    cursor: pointer;
+}
+
+/* Tabelas internas não recebem o espaçamento das tabelas de dados do site.
+   Com altura automática, essa margem interfere no cálculo de tamanho da grade. */
+.fc table {
+    margin-top: 0;
+}
+
+.fc .evento-disponivel { background: #287949; border-color: #287949; }
+.fc .evento-consulta { background: #186b9a; border-color: #186b9a; }
+.fc .evento-exame { background: #805125; border-color: #805125; }
+.legenda-medico { display: flex; flex-wrap: wrap; gap: 20px; margin: 15px 0; }
+.legenda-medico span { border-left: 12px solid; padding-left: 8px; }
+.legenda-medico .livre { border-color: #287949; }
+.legenda-medico .consulta { border-color: #186b9a; }
+.legenda-medico .exame { border-color: #805125; }
+
+.horario-disponivel .fc-event-main {
+    font-weight: bold;
+}
+
+/* =========================================================
+   FULLCALENDAR - DESTACAR HORAS INTEIRAS
+========================================================= */
+
+/* Fundo das horas cheias: 07:00, 08:00, 09:00... */
+.fc .fc-timegrid-slot-lane[data-time$=":00:00"] {
+    background-color: #eef1f4 !important;
+}
+
+/* Mantém as meias horas mais claras */
+.fc .fc-timegrid-slot-lane[data-time$=":30:00"] {
+    background-color: #ffffff !important;
+}
+
+/* =========================================================
+   FULLCALENDAR - AJUSTE VERTICAL DOS EVENTOS
+========================================================= */
+
+.fc .fc-timegrid-event-harness {
+    transform: translateY(5px);
+}

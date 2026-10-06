@@ -1,0 +1,414 @@
+.pagina-disponibilidade {
+        max-width: 920px;
+        margin: 45px auto;
+        padding: 0 20px;
+    }
+
+
+    /* ==================================================
+       CABEÇALHO
+    ================================================== */
+
+    .cabecalho-pagina {
+        margin-bottom: 22px;
+    }
+
+    .cabecalho-pagina h1 {
+        margin: 0 0 12px 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: #222;
+    }
+
+    .cabecalho-pagina p {
+        margin: 0;
+        font-size: 14px;
+        color: #333;
+    }
+
+
+    /* ==================================================
+       CARDS
+    ================================================== */
+
+    .card-disponibilidade {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 22px;
+        margin-bottom: 20px;
+
+        box-shadow:
+            0 3px 12px
+            rgba(0, 0, 0, 0.08);
+    }
+
+    .card-disponibilidade h2 {
+        margin: 10px 0 16px 0;
+        font-size: 18px;
+    }
+
+    .card-disponibilidade h3 {
+        margin: 20px 0 14px 0;
+        font-size: 17px;
+    }
+
+
+    /* ==================================================
+       ABAS
+    ================================================== */
+
+    .botoes-abas {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .botao-aba {
+        border: none;
+        border-radius: 4px;
+
+        background: #eeeeee;
+
+        padding: 9px 15px;
+
+        cursor: pointer;
+
+        font-size: 13px;
+
+        transition:
+            background 0.2s ease,
+            color 0.2s ease;
+    }
+
+    .botao-aba:hover {
+        background: #dddddd;
+    }
+
+    .botao-aba.ativo {
+        background: #293e50;
+        color: white;
+    }
+
+
+    /* ==================================================
+       FORMULÁRIOS
+    ================================================== */
+
+    .descricao-formulario {
+        font-size: 14px;
+        margin-bottom: 18px;
+        color: #333;
+    }
+
+    .campo {
+        margin-bottom: 17px;
+    }
+
+    .campo > label {
+        display: block;
+        margin-bottom: 7px;
+
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+
+
+    .campo input:focus,
+    .campo select:focus {
+        outline: none;
+        border-color: #248fc1;
+
+        box-shadow:
+            0 0 0 1px
+            rgba(36, 143, 193, 0.2);
+    }
+
+
+    /* ==================================================
+       BOTÃO PRINCIPAL
+    ================================================== */
+
+    .botao-principal {
+        border: none;
+        border-radius: 4px;
+
+        background: #eeeeee;
+
+        padding: 9px 16px;
+
+        font-size: 13px;
+
+        cursor: pointer;
+
+        transition:
+            background 0.2s ease;
+    }
+
+    .botao-principal:hover {
+        background: #dddddd;
+    }
+
+
+    /* ==================================================
+       DIAS DA SEMANA
+    ================================================== */
+
+    .titulo-dias-semana {
+        font-weight: 500;
+    }
+
+    .ajuda-dias-semana {
+        margin: -2px 0 12px 0;
+
+        font-size: 13px;
+
+        color: #666;
+    }
+
+    .dias-semana-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(7, 1fr);
+
+        gap: 8px;
+    }
+
+    .dia-semana-card {
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+
+        gap: 6px;
+
+        min-height: 44px;
+
+        padding: 7px;
+
+        border: 1px solid #cccccc;
+
+        border-radius: 5px;
+
+        cursor: pointer;
+
+        font-size: 12px;
+
+        background: #fafafa;
+
+        text-align: center;
+
+        transition:
+            background 0.2s ease,
+            border-color 0.2s ease;
+    }
+
+    .dia-semana-card:hover {
+        background: #f0f0f0;
+    }
+
+    .dia-semana-card:has(input:checked) {
+        border-color: #293e50;
+
+        background: #293e50;
+
+        color: white;
+    }
+
+    .dia-semana-card input {
+        margin: 0;
+    }
+
+    .nome-dia {
+        line-height: 1.2;
+    }
+
+
+    /* ==================================================
+       ERROS
+    ================================================== */
+
+    .erro-campo {
+        margin-top: 5px;
+
+        font-size: 12px;
+
+        color: #b3261e;
+    }
+
+    .erro-formulario {
+        margin-bottom: 15px;
+
+        padding: 10px;
+
+        border-radius: 4px;
+
+        background: #fdecec;
+
+        color: #a52020;
+
+        font-size: 13px;
+    }
+
+    .erro-formulario p {
+        margin: 0;
+    }
+
+
+    /* ==================================================
+       LISTAGEM
+    ================================================== */
+
+    .horarios-cadastrados {
+        margin-top: 18px;
+    }
+
+    .campo-data-listagem {
+        max-width: 250px;
+    }
+
+
+    /* ==================================================
+       TABELA
+    ================================================== */
+
+    .tabela-container {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .tabela-horarios {
+        width: 100%;
+
+        border-collapse: collapse;
+
+        font-size: 14px;
+    }
+
+    .tabela-horarios th,
+    .tabela-horarios td {
+        padding: 12px 10px;
+
+        border-bottom: 1px solid #dddddd;
+
+        text-align: left;
+
+        vertical-align: middle;
+    }
+
+    .tabela-horarios th {
+        font-weight: 600;
+
+        background: #f7f7f7;
+    }
+
+    .tabela-horarios tbody tr:hover {
+        background: #fafafa;
+    }
+
+
+    /* ==================================================
+       STATUS
+    ================================================== */
+
+    .status {
+        display: inline-block;
+
+        padding: 5px 8px;
+
+        border-radius: 4px;
+
+        font-size: 12px;
+    }
+
+    .status-disponivel {
+        background: #e8f5e9;
+        color: #256029;
+    }
+
+    .status-agendado {
+        background: #fff3cd;
+        color: #805a00;
+    }
+
+
+    /* ==================================================
+       REMOVER
+    ================================================== */
+
+    .form-remover {
+        margin: 0;
+    }
+
+    .botao-remover {
+        border: none;
+
+        border-radius: 4px;
+
+        padding: 7px 11px;
+
+        background: #eeeeee;
+
+        cursor: pointer;
+
+        font-size: 12px;
+    }
+
+    .botao-remover:hover {
+        background: #dddddd;
+    }
+
+    .sem-acao {
+        color: #999999;
+    }
+
+    .nenhum-horario {
+        text-align: center !important;
+
+        padding: 25px !important;
+
+        color: #666666;
+    }
+
+
+    /* ==================================================
+       RESPONSIVO
+    ================================================== */
+
+    @media (max-width: 850px) {
+
+        .dias-semana-grid {
+            grid-template-columns:
+                repeat(4, 1fr);
+        }
+
+    }
+
+
+    @media (max-width: 550px) {
+
+        .pagina-disponibilidade {
+            margin-top: 25px;
+            padding: 0 12px;
+        }
+
+        .card-disponibilidade {
+            padding: 16px;
+        }
+
+        .dias-semana-grid {
+            grid-template-columns:
+                repeat(2, 1fr);
+        }
+
+        .botoes-abas {
+            flex-direction: column;
+        }
+
+        .botao-aba {
+            width: 100%;
+        }
+
+    }

@@ -1,0 +1,12 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Verificar autenticador{% endblock %}
+{% block auth_content %}
+<h2>Verificação em duas etapas</h2>
+<p>Digite o código atual do seu aplicativo autenticador.</p>
+<form method="post">
+    {% csrf_token %}
+    <div class="campo">{{ form.token.label_tag }}{{ form.token }}{{ form.token.errors }}</div>
+    <button type="submit">Verificar e entrar</button>
+</form>
+<div class="login-links"><a href="{% url 'accounts:mfa_recover' %}">Perdi acesso ao autenticador</a></div>
+{% endblock %}

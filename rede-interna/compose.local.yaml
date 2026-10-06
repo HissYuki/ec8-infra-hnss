@@ -1,0 +1,9 @@
+services:
+  backend:
+    networks:
+      local_transit:
+        aliases: [hospital-backend]
+networks:
+  local_transit:
+    external: true
+    name: hospital-local-transit

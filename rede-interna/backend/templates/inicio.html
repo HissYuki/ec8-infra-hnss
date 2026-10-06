@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+
+{% block title %}
+Hospital Nossa Senhora da Saúde
+{% endblock %}
+
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/inicio.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<!-- ======================================================
+     APRESENTAÇÃO PRINCIPAL
+======================================================= -->
+
+<section class="hero-hospital">
+
+    <div class="hero-conteudo">
+
+        <div class="hero-texto">
+
+            <span class="hero-subtitulo">
+                Hospital Nossa Senhora da Saúde
+            </span>
+
+            <h2>
+                Cuidado, saúde e atendimento
+                ao alcance de você.
+            </h2>
+
+            <p>
+                Acesse nossos serviços para consultar médicos,
+                realizar agendamentos de consultas e exames
+                e acompanhar seus atendimentos.
+            </p>
+
+
+            <div class="hero-acoes">
+
+                <a
+                    href="{% url 'accounts:login_paciente' %}"
+                    class="botao-home botao-home-principal"
+                >
+                    Acessar área do paciente
+                </a>
+
+                <a
+                    href="{% url 'accounts:login_medico' %}"
+                    class="botao-home botao-home-secundario"
+                >
+                    Área dos profissionais
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="hero-logo">
+
+            <img
+                src="{% static 'images/logo.png' %}"
+                alt="Hospital Nossa Senhora da Saúde"
+            >
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ======================================================
+     SERVIÇOS
+======================================================= -->
+
+<section class="secao-home">
+
+    <div class="secao-titulo">
+
+        <h2>
+            Nossos serviços
+        </h2>
+
+        <p>
+            Utilize o sistema do hospital para gerenciar
+            seus principais atendimentos.
+        </p>
+
+    </div>
+
+
+    <div class="cards-servicos">
+
+
+        <!-- CONSULTAS -->
+
+        <div class="card-servico">
+
+            <div class="icone-servico">
+                🩺
+            </div>
+
+            <h3>
+                Consultas
+            </h3>
+
+            <p>
+                Consulte os médicos disponíveis e escolha
+                uma data e horário para seu atendimento.
+            </p>
+
+        </div>
+
+
+        <!-- EXAMES -->
+
+        <div class="card-servico">
+
+            <div class="icone-servico">
+                🧪
+            </div>
+
+            <h3>
+                Exames
+            </h3>
+
+            <p>
+                Consulte os exames oferecidos pelo hospital
+                e realize seu agendamento de forma simples.
+            </p>
+
+        </div>
+
+
+        <!-- ACOMPANHAMENTO -->
+
+        <div class="card-servico">
+
+            <div class="icone-servico">
+                📅
+            </div>
+
+            <h3>
+                Acompanhamento
+            </h3>
+
+            <p>
+                Acompanhe suas consultas e exames futuros,
+                além do histórico dos atendimentos realizados.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ======================================================
+     ÁREA DO PACIENTE
+======================================================= -->
+
+<section class="secao-paciente-home">
+
+    <div>
+
+        <span class="secao-etiqueta">
+            Área do paciente
+        </span>
+
+        <h2>
+            Gerencie seus atendimentos em um só lugar.
+        </h2>
+
+        <p>
+            Entre na sua conta para agendar consultas,
+            marcar exames e consultar seus atendimentos.
+        </p>
+
+    </div>
+
+
+    <a
+        href="{% url 'accounts:login_paciente' %}"
+        class="botao-home botao-home-principal"
+    >
+        Entrar
+    </a>
+
+</section>
+
+
+{% endblock %}

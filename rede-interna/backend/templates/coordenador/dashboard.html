@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Coordenação de Exames
+{% endblock %}
+
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/calendarios.css' %}">
+<link rel="stylesheet" href="{% static 'css/coordenador/agenda.css' %}">
+
+
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ======================================================
+     CABEÇALHO
+======================================================= -->
+
+<div class="dashboard-header">
+
+    <div class="dashboard-header-texto">
+
+        <h2>
+            Coordenação de exames
+        </h2>
+
+        <p>
+            Visualize os horários de exames, os médicos responsáveis
+            e os agendamentos realizados pelos pacientes.
+        </p>
+
+    </div>
+
+
+    <div>
+
+        <a
+            href="{% url 'coordenador:disponibilidade' %}"
+            class="botao-disponibilidade"
+        >
+            Gerenciar disponibilidade
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ======================================================
+     LEGENDA
+======================================================= -->
+
+<div class="legenda-calendario">
+
+    <div class="legenda-item">
+
+        <span
+            class="legenda-cor legenda-disponivel"
+        ></span>
+
+        <span>
+            Horário disponível
+        </span>
+
+    </div>
+
+
+    <div class="legenda-item">
+
+        <span
+            class="legenda-cor legenda-agendado"
+        ></span>
+
+        <span>
+            Exame agendado
+        </span>
+
+    </div>
+
+</div>
+
+
+<!-- ======================================================
+     CALENDÁRIO
+======================================================= -->
+
+<div class="dashboard-card">
+
+    <div id="calendario-coordenador" data-agenda data-primeiro-dia="1" data-cursor="default" data-url-eventos="{% url 'coordenador:exames_calendario' %}">
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+{% include 'includes/fullcalendar_js.html' %}
+
+
+<script src="{% static 'js/agendas.js' %}"></script>
+
+{% endblock %}

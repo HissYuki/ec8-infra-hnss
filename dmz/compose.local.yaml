@@ -1,0 +1,8 @@
+services:
+  nginx-web:
+    networks:
+      local_transit: {}
+networks:
+  local_transit:
+    external: true
+    name: hospital-local-transit

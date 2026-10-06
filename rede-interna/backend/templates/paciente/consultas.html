@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Consultas
+{% endblock %}
+
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pacientes.css' %}">
+<link rel="stylesheet" href="{% static 'css/calendarios.css' %}">
+
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<div class="dashboard-header">
+
+    <h2>
+        Agendar consulta
+    </h2>
+
+    <p>
+        Escolha um médico e selecione um horário disponível.
+    </p>
+
+</div>
+
+
+<div class="acoes">
+
+    <a
+        href="{% url 'pacientes:dashboard' %}"
+        class="botao"
+    >
+        Voltar
+    </a>
+
+</div>
+
+
+<!-- =====================================================
+     AGENDAMENTO
+===================================================== -->
+
+<div class="dashboard-card">
+
+    <div class="campo">
+
+        <label for="medico-select">
+            Médico
+        </label>
+
+
+        <select id="medico-select">
+
+            <option value="">
+                Selecione um médico
+            </option>
+
+
+            {% for medico in medicos %}
+
+                <option value="{{ medico.id }}">
+
+                    Dr(a).
+                    {{ medico.usuario.get_full_name }}
+                    -
+                    {{ medico.especialidade }}
+
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+
+    <div
+        id="mensagem-calendario"
+        class="mensagem-calendario"
+    >
+        Selecione um médico para visualizar a agenda.
+    </div>
+
+
+    <div id="calendario-consulta"
+        data-agendamento
+        data-seletor="medico-select"
+        data-url-horarios="{% url 'pacientes:horarios_disponiveis' 0 %}"
+        data-url-agendamento="{% url 'pacientes:agendar_consulta' 0 %}"
+        data-mensagem-selecao="Selecione um médico para visualizar a agenda."
+        data-mensagem-vazia="Este médico não possui horários disponíveis no momento."
+        data-mensagem-confirmacao="Deseja agendar esta consulta para "
+        data-aba-passados="aba-passadas"
+        data-lista-atuais="consultas-atuais"
+        data-lista-passados="consultas-passadas">
+    </div>
+
+
+    <form
+        id="form-agendamento"
+        method="post"
+    >
+
+        {% csrf_token %}
+
+    </form>
+
+</div>
+
+
+<!-- =====================================================
+     MINHAS CONSULTAS
+===================================================== -->
+
+<div class="dashboard-card">
+
+    <h3>
+        Minhas consultas
+    </h3>
+
+
+    <div class="abas-consultas">
+
+        <button
+            type="button"
+            id="aba-atuais"
+            class="aba-consulta ativa"
+        >
+            Consultas atuais
+        </button>
+
+
+        <button
+            type="button"
+            id="aba-passadas"
+            class="aba-consulta"
+        >
+            Consultas passadas
+        </button>
+
+    </div>
+
+
+    <!-- CONSULTAS ATUAIS -->
+
+    <div id="consultas-atuais">
+
+        {% if consultas_atuais %}
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Médico</th>
+                        <th>Especialidade</th>
+                        <th>Data</th>
+                        <th>Horário</th>
+                        <th>Ação</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for consulta in consultas_atuais %}
+
+                        <tr>
+
+                            <td>
+                                Dr(a).
+                                {{ consulta.medico.usuario.get_full_name }}
+                            </td>
+
+                            <td>
+                                {{ consulta.medico.especialidade }}
+                            </td>
+
+                            <td>
+                                {{ consulta.data_hora|date:"d/m/Y" }}
+                            </td>
+
+                            <td>
+                                {{ consulta.data_hora|date:"H:i" }}
+                            </td>
+
+                            <td>
+
+                                <form
+                                    method="post"
+                                    action="{% url 'pacientes:cancelar_consulta' consulta.id %}"
+                                    data-confirm-submit="Deseja realmente cancelar esta consulta?"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="botao-cancelar"
+                                    >
+                                        Cancelar
+                                    </button>
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+
+        {% else %}
+
+            <p>
+                Você não possui consultas futuras agendadas.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- CONSULTAS PASSADAS -->
+
+    <div class="inicialmente-oculto"
+        id="consultas-passadas"
+
+    >
+
+        {% if consultas_passadas %}
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Médico</th>
+                        <th>Especialidade</th>
+                        <th>Data</th>
+                        <th>Horário</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for consulta in consultas_passadas %}
+
+                        <tr>
+
+                            <td>
+                                Dr(a).
+                                {{ consulta.medico.usuario.get_full_name }}
+                            </td>
+
+                            <td>
+                                {{ consulta.medico.especialidade }}
+                            </td>
+
+                            <td>
+                                {{ consulta.data_hora|date:"d/m/Y" }}
+                            </td>
+
+                            <td>
+                                {{ consulta.data_hora|date:"H:i" }}
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+
+        {% else %}
+
+            <p>
+                Você ainda não possui consultas anteriores.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+{% include 'includes/fullcalendar_js.html' %}
+
+
+<script src="{% static 'js/agendamentos.js' %}"></script>
+
+{% endblock %}

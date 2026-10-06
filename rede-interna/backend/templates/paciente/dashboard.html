@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Área do Paciente
+{% endblock %}
+
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pacientes.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-header">
+
+    <h2>
+        Olá, {{ user.first_name }}
+    </h2>
+
+    <p>
+        Bem-vindo à sua área do paciente.
+    </p>
+
+</div>
+
+
+<div class="dashboard-card">
+
+    <h3>
+        Você deseja?
+    </h3>
+
+
+    <div class="opcoes-paciente">
+
+        <a
+            href="{% url 'pacientes:consultas' %}"
+            class="opcao-paciente"
+        >
+
+            <h3>
+                Agendar Consulta
+            </h3>
+
+            <p>
+                Escolha um médico e visualize
+                os horários disponíveis.
+            </p>
+
+        </a>
+
+
+        <a
+            href="{% url 'pacientes:exames' %}"
+            class="opcao-paciente"
+        >
+
+            <h3>
+                Agendar Exame
+            </h3>
+
+            <p>
+                Escolha um exame e visualize
+                os horários disponíveis.
+            </p>
+
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

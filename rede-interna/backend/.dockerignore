@@ -1,0 +1,17 @@
+.git
+.venv
+venv
+.env
+.env.*
+**/__pycache__
+**/*.py[cod]
+**/*.sqlite3*
+**/*.log
+staticfiles
+.pytest_cache
+.idea
+.vscode
+*.tmp
+*.temp
+*.key
+*.pem

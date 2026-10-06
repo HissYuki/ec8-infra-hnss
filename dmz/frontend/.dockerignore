@@ -1,0 +1,10 @@
+**
+!Dockerfile
+!default.conf.template
+!static/
+!static/**
+**/__pycache__
+**/*.py[cod]
+**/.env*
+**/*.key
+**/*.pem
