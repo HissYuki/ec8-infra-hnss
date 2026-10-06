@@ -1,0 +1,14 @@
+#!/bin/sh
+
+docker-entrypoint.sh server &
+VAULT_PID=$!
+echo "Aguardando o KMS Vault iniciar..."
+sleep 5
+
+vault operator unseal <Adicione chave de unseal 1>
+vault operator unseal <Adicione chave de unseal 2>
+vault operator unseal <Adicione chave de unseal 3>
+
+echo "KMS Vault destrancado!"
+
+wait $VAULT_PID
