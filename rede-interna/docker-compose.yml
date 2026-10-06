@@ -1,7 +1,10 @@
 services:
+  # VLAN 20
   hashicorp-vault:
     image: hashicorp/vault:latest
     container_name: dados-vault
+    depends_on:
+      - kms-vault
     ports:
       - "8200:8200"
     environment:
@@ -12,20 +15,51 @@ services:
     volumes:
       - vault_data:/vault/file
       - ./vault:/vault/config
-    command: server
+      - ./vault/start-vault.sh:/start-vault.sh:ro
+    command: ["/bin/sh", "/start-vault.sh"]
+    networks:
+      - vlan20
+    restart: unless-stopped
+  
+  # Vault para simular 
+  kms-vault:
+    image: hashicorp/vault:latest
+    container_name: kms-vault
+    ports:
+      - "8201:8200"
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_ADDR: "http://0.0.0.0:8201"
+      VAULT_API_ADDR: "http://0.0.0.0:8201"
+      VAULT_LOCAL_CONFIG: '{"storage": {"file": {"path": "/vault/file"}}, "listener": {"tcp": {"address": "0.0.0.0:8201", "tls_disable": 1}}, "ui": true}'
+    volumes:
+      - kms_data:/vault/file
+      - ./kms/start-kms.sh:/start-kms.sh:ro
+    command: ["/bin/sh", "/start-kms.sh"]
     networks:
       - vlan20
     restart: unless-stopped
 
   postgresql:
-    image: postgres:15-alpine
+    build: ./postgres
     container_name: dados-postgres
     environment:
       POSTGRES_USER: app_admin
       POSTGRES_PASSWORD: teste
       POSTGRES_DB: dados_db
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=replica"
+      - "-c"
+      - "archive_mode=on"
+      - "-c"
+      - "archive_command=pgbackrest --config=/etc/pgbackrest.conf --stanza=db_dados archive-push %p"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - pgbackrest_data:/var/lib/pgbackrest
+      - ./pgbackrest/pgbackrest-dados.conf:/etc/pgbackrest.conf:ro
     networks:
       - vlan20
     restart: unless-stopped
@@ -43,6 +77,7 @@ services:
       - vlan20
     restart: unless-stopped
 
+  # VLAN 30
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: seguranca-keycloak
@@ -55,12 +90,22 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
-      - "8080:8080"
+      - "8081:8080"
     networks:
       - vlan20
       - vlan30
     restart: unless-stopped
 
+  pgbackrest-repo:
+    image: alpine:latest
+    container_name: seguranca-pgbackrest
+    command: ["sleep", "infinity"] 
+    volumes:
+      - pgbackrest_data:/var/lib/pgbackrest
+    networks:
+      - vlan30
+      - vlan20
+    restart: unless-stopped
 
 networks:
   vlan20:
@@ -84,5 +129,8 @@ networks:
 volumes:
   vault_data:
   vault_config:
+  kms_data:
   keycloak_db_data:
   postgres_data:
+  pgbackrest_data:
+  pgbackrest_config:
