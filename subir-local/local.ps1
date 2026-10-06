@@ -1,8 +1,9 @@
-param([ValidateSet('prepare','up','dev','down','status','test')][string]$Action = 'up')
+param([ValidateSet('prepare','up','dev','down','status','test','monitoring-test')][string]$Action = 'up')
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $envPath = Join-Path $PSScriptRoot '.env'
 $tlsPath = Join-Path $PSScriptRoot 'tls'
+$wazuhPath = Join-Path $PSScriptRoot 'wazuh-runtime'
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 function Invoke-Docker {
     & docker @args
@@ -37,11 +38,33 @@ if ($Action -in @('prepare','up','dev')) {
         [IO.File]::WriteAllText($envPath, $content, $utf8)
     }
     New-Item -ItemType Directory -Force $tlsPath | Out-Null
-    Invoke-Docker run --rm --mount "type=bind,source=$tlsPath,target=/certs" --mount "type=bind,source=$PSScriptRoot/certificates.sh,target=/certificates.sh,readonly" alpine:3.22 sh -c 'apk add --no-cache openssl >/dev/null && sh /certificates.sh'
+    # Acrescenta somente as novas configurações, preservando segredos existentes.
+    $content = [IO.File]::ReadAllText($envPath)
+    $content = [regex]::Replace($content, '(?m)^TLS_DIR=[^\r\n]*', 'TLS_DIR=' + $tlsPath.Replace('\','/'))
+    $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+    foreach ($key in @('WAZUH_INDEXER_ADMIN_PASSWORD','WAZUH_DASHBOARD_PASSWORD','WAZUH_API_PASSWORD','WAZUH_ENROLLMENT_PASSWORD')) {
+        if ($content -notmatch "(?m)^$key=(?!SUBSTITUA)[^\r\n]+") {
+            $bytes = New-Object byte[] 20
+            $rng.GetBytes($bytes)
+            $value = 'Aa1!' + [BitConverter]::ToString($bytes).Replace('-','').ToLowerInvariant()
+            if ($content -match "(?m)^$key=") { $content = [regex]::Replace($content, "(?m)^$key=[^\r\n]*", "$key=$value") }
+            else { $content += "`n$key=$value`n" }
+        }
+    }
+    $rng.Dispose()
+    if ($content -match '(?m)^WAZUH_RUNTIME_DIR=') {
+        $content = [regex]::Replace($content, '(?m)^WAZUH_RUNTIME_DIR=[^\r\n]*', 'WAZUH_RUNTIME_DIR=' + $wazuhPath.Replace('\','/'))
+    } else { $content += "`nWAZUH_RUNTIME_DIR=$($wazuhPath.Replace('\','/'))`n" }
+    [IO.File]::WriteAllText($envPath, $content, $utf8)
+    New-Item -ItemType Directory -Force $wazuhPath | Out-Null
+    Invoke-Docker build -t hospital-wazuh-prepare "$projectRoot/rede-interna/wazuh/prepare"
+    Invoke-Docker run --rm --network none --mount "type=bind,source=$envPath,target=/setup.env,readonly" --mount "type=bind,source=$wazuhPath,target=/runtime" hospital-wazuh-prepare
+    Invoke-Docker run --rm --mount "type=bind,source=$tlsPath,target=/certs" --mount "type=bind,source=$PSScriptRoot/certificates.sh,target=/certificates.sh,readonly" alpine:3.22 sh -c 'if [ ! -e /certs/public.key ]; then apk add --no-cache openssl >/dev/null; fi; sh /certificates.sh'
     # Listar não gera erro quando a rede ainda não existe (PowerShell 5.1).
     $localNetworks = & docker network ls --format '{{.Name}}'
     if ($LASTEXITCODE -ne 0) { throw 'Não foi possível consultar as redes Docker.' }
     if ($localNetworks -notcontains 'hospital-local-transit') { Invoke-Docker network create --internal hospital-local-transit }
+    if ($localNetworks -notcontains 'hospital-wazuh-transit') { Invoke-Docker network create --internal hospital-wazuh-transit }
 }
 switch ($Action) {
     prepare { Write-Host 'Configuração local preparada. Chaves e .env fora do Git.' }
@@ -55,13 +78,18 @@ switch ($Action) {
             Compose-Internal up -d --force-recreate --wait backend
         }
         # Vault, Keycloak e seu banco pertencem à infraestrutura padrão.
-        if ($Action -eq 'dev') {
-            Invoke-Docker compose --project-name hospital-interna --env-file $envPath -f "$projectRoot/rede-interna/docker-compose.yml" -f "$projectRoot/rede-interna/compose.local.yaml" -f "$projectRoot/rede-interna/compose.dev.yaml" up -d --wait --wait-timeout 180
-        } else {
-            Compose-Internal up -d --wait --wait-timeout 180
+        Compose-Internal up -d --wait --wait-timeout 600 wazuh-indexer wazuh-manager
+        foreach ($group in @('dmz','dados','endpoints')) {
+            Compose-Internal exec -T wazuh-manager sh -c 'test -d /var/ossec/etc/shared/$1 || /var/ossec/bin/agent_groups -a -g $1 -q' -- $group
         }
-        Compose-Dmz up -d --build --force-recreate --wait
-        Write-Host 'Aplicação: https://localhost:8443 (CA de teste em integration/tls/ca.crt).'
+        if ($Action -eq 'dev') {
+            Invoke-Docker compose --project-name hospital-interna --env-file $envPath -f "$projectRoot/rede-interna/docker-compose.yml" -f "$projectRoot/rede-interna/compose.local.yaml" -f "$projectRoot/rede-interna/compose.dev.yaml" up -d --wait --wait-timeout 600
+        } else {
+            Compose-Internal up -d --wait --wait-timeout 600
+        }
+        Compose-Dmz up -d --build --force-recreate --wait --wait-timeout 600
+        Write-Host 'Aplicação: https://localhost:8443 (CA de teste em subir-local/tls/ca.crt).'
+        Write-Host 'Wazuh: https://localhost:9443; usuário admin, senha WAZUH_INDEXER_ADMIN_PASSWORD de subir-local/.env.'
     }
     down {
         Compose-Dmz down
@@ -69,6 +97,17 @@ switch ($Action) {
         Write-Host 'Containers encerrados. Volumes e certificados preservados.'
     }
     status { Compose-Internal ps; Compose-Dmz ps }
+    monitoring-test {
+        $marker = [Guid]::NewGuid().ToString('N')
+        foreach ($area in @('dmz','dados','endpoints')) {
+            $line = @{ source='hospital.security'; event='monitoring_test'; test_id=$marker } | ConvertTo-Json -Compress
+            [IO.File]::AppendAllText("$wazuhPath/canary/$area/events.jsonl", "$line`n", $utf8)
+            [IO.File]::AppendAllText("$wazuhPath/canary/$area/baseline.txt", "test:$marker`n", $utf8)
+        }
+        $testScript = [IO.File]::ReadAllText("$PSScriptRoot/wazuh_test.py").Replace("`r`n", "`n")
+        $testScript | & docker compose --project-name hospital-interna --env-file $envPath -f "$projectRoot/rede-interna/docker-compose.yml" -f "$projectRoot/rede-interna/compose.local.yaml" exec -T wazuh-manager /var/ossec/framework/python/bin/python3 - $marker
+        if ($LASTEXITCODE -ne 0) { throw 'Falha na validacao Wazuh.' }
+    }
     test {
         Compose-Internal exec -T backend python manage.py check
         Compose-Internal exec -T backend python manage.py makemigrations --check --dry-run

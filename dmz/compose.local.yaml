@@ -1,8 +1,37 @@
 services:
   nginx-web:
     networks:
-      local_transit: {}
+      local_transit:
+        priority: 2000
+  wazuh-agent-dmz:
+    image: wazuh/wazuh-agent:4.14.8
+    hostname: lab-dmz
+    restart: unless-stopped
+    mem_limit: 256m
+    environment:
+      WAZUH_MANAGER_SERVER: wazuh.manager
+      WAZUH_AGENT_NAME: lab-dmz
+      WAZUH_AGENT_GROUP: dmz
+      WAZUH_REGISTRATION_PASSWORD: ${WAZUH_ENROLLMENT_PASSWORD}
+    volumes:
+      - wazuh_agent_dmz:/var/ossec/etc
+      - ../rede-interna/wazuh/config/agent-lab.conf:/wazuh-config-mount/etc/ossec.conf:ro
+      - ${WAZUH_RUNTIME_DIR}/certs/root-ca.pem:/etc/wazuh-ca.pem:ro
+      - ${WAZUH_RUNTIME_DIR}/canary/dmz:/monitor/canary:ro
+      - ./proxy:/monitor/config:ro
+    networks: [vlan10, wazuh_transit]
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q 'status=.connected.' /var/ossec/var/run/wazuh-agentd.state"]
+      interval: 15s
+      retries: 20
+      start_period: 60s
 networks:
   local_transit:
     external: true
     name: hospital-local-transit
+
+  wazuh_transit:
+    external: true
+    name: hospital-wazuh-transit
+volumes:
+  wazuh_agent_dmz:

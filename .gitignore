@@ -240,7 +240,12 @@ Desktop.ini
 ~$*
 
 # Integração: material local/privado nunca versionado.
+subir-local/tls/
+subir-local/wazuh-runtime/
 integration/tls/
+integration/wazuh-runtime/
+subir-servidor/**/tls/
+subir-servidor/**/wazuh-runtime/
 staticfiles/
 dmz/certs/
 rede-interna/certs/

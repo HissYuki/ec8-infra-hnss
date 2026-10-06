@@ -8,7 +8,7 @@ Django usam o serviço `backend`; não é necessário um ambiente virtual local.
 ```text
 dmz/
   docker-compose.yml       # proxy, WAF e nginx-web
-  compose.local.yaml       # comunicação entre projetos apenas no teste local
+  compose.local.yaml       # comunicação local e agente Wazuh de laboratório
   frontend/
     Dockerfile
     .dockerignore
@@ -17,8 +17,9 @@ dmz/
     tests/                 # teste de navegador dos calendários
   proxy/                   # configuração e Dockerfile do proxy
 rede-interna/
-  docker-compose.yml       # backend, dois PostgreSQL, Vault e Keycloak
-  compose.local.yaml       # trânsito local frontend/backend
+  docker-compose.yml       # backend, dois PostgreSQL, Vault, Keycloak e central Wazuh
+  compose.local.yaml       # trânsito local e agentes Wazuh de laboratório
+  wazuh/                   # configuração da central, agentes e bootstrap local
   compose.dev.yaml         # montagem do backend e reload para desenvolvimento
   compose.server.yaml      # publicação restrita do backend na interface interna
   backend/
@@ -30,7 +31,12 @@ rede-interna/
     templates/             # templates dinâmicos renderizados pelo Django
   postgres/                # provisionamento inicial da aplicação
   vault/                   # configuração existente preservada
-integration/               # execução e validação conjunta LOCAL; certificados
+  wazuh/                   # central SIEM/XDR, regras e bootstrap local
+subir-local/               # execução e validação conjunta LOCAL; certificados
+subir-servidor/
+  DMZ/                     # script Bash e exemplo de ambiente exclusivo da DMZ
+  Rede Interna/            # script Bash e exemplo de ambiente exclusivo da Rede Interna
+  common.sh                # funções compartilhadas, sem segredos
 .env.example               # exemplo global, sem credenciais reais
 ```
 
@@ -43,41 +49,49 @@ O fluxo permanece: **HTTPS → Nginx Proxy → ModSecurity → Nginx Web → bac
 Django → PostgreSQL**. O backend usa Python 3.13, Django 5.2.17 e Gunicorn com
 TLS mútuo. O PostgreSQL da aplicação tem rede privada e não publica portas.
 Vault, Keycloak e o PostgreSQL exclusivo do Keycloak são serviços obrigatórios.
+Wazuh Manager, Indexer e Dashboard também sobem por padrão. Os overrides locais
+incluem três agentes de laboratório; o guia em [rede-interna/wazuh](rede-interna/wazuh/README.md)
+explica a instalação futura de agentes nos hosts e as portas entre VLANs.
 A organização de arquivos não muda as redes, os volumes ou as regras de acesso.
 
 ## Iniciar, desenvolver e parar
+
+Os comandos abaixo são somente locais. Para as duas máquinas Linux, consulte
+[a preparação e os scripts separados de servidor](subir-servidor/README.md).
+Eles preservam os Compose existentes e não utilizam os overrides locais.
 
 Requisitos: Docker Desktop com containers Linux e Docker Compose >= 2.17
 (com suporte a `additional_contexts`). Execute na raiz:
 
 ```powershell
-./integration/local.ps1 up
-./integration/local.ps1 status
+./subir-local/local.ps1 up
+./subir-local/local.ps1 status
 ```
 
 Site: https://localhost:8443; Keycloak: http://localhost:8180/admin/;
+Wazuh: https://localhost:9443 (`admin`, senha em `subir-local/.env`).
 Vault: http://localhost:8200/ui/. A CA HTTPS é de teste; detalhes e limitações
-estão no [guia de integração](integration/README.md).
+estão no [guia de integração](subir-local/README.md).
 
-O script prepara `integration/.env` a partir do exemplo global somente quando
+O script prepara `subir-local/.env` a partir do exemplo global somente quando
 ele não existe, com senhas aleatórias, e preserva certificados e volumes
 existentes. Não gere um novo arquivo de segredos para um banco já inicializado.
 
 Para editar Python/templates e gerar migrations no diretório do repositório:
 
 ```powershell
-./integration/local.ps1 dev
+./subir-local/local.ps1 dev
 ```
 
 Esse modo monta `rede-interna/backend/` em `/app` e ativa reload do Gunicorn.
 Alterações de dependências exigem rebuild. Para publicar alterações de CSS/JS
-na imagem frontend, execute novamente `./integration/local.ps1 dev`.
+na imagem frontend, execute novamente `./subir-local/local.ps1 dev`.
 `up` usa imagens sem a montagem de desenvolvimento.
 
 Para parar preservando os bancos e o Vault:
 
 ```powershell
-./integration/local.ps1 down
+./subir-local/local.ps1 down
 ```
 
 Não remova volumes. O ambiente antigo de dois serviços na raiz foi aposentado;
@@ -88,7 +102,7 @@ seu volume PostgreSQL antigo não foi apagado.
 Na raiz, defina uma função PowerShell para não repetir as opções:
 
 ```powershell
-function hospital { docker compose -p hospital-interna --env-file integration/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml @args }
+function hospital { docker compose -p hospital-interna --env-file subir-local/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml @args }
 hospital exec backend python manage.py check
 hospital exec backend python manage.py makemigrations --check --dry-run
 hospital exec backend python manage.py showmigrations
@@ -107,7 +121,7 @@ Execute a suíte pelo script; ele cria um banco de testes separado e concede/
 revoga temporariamente CREATEDB à role da aplicação:
 
 ```powershell
-./integration/local.ps1 test
+./subir-local/local.ps1 test
 ```
 
 Para rodar diretamente o runner, a mesma permissão de banco de testes precisa
@@ -151,7 +165,7 @@ sem código Python ou segredos. Construa frontend e backend do mesmo commit.
 Com Node, Playwright e Chrome disponíveis apenas como ferramentas de teste:
 
 ```powershell
-node integration/browser_test.cjs 'C:/Program Files/Google/Chrome/Application/chrome.exe'
+node subir-local/browser_test.cjs 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 node dmz/frontend/tests/calendar_browser.cjs 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 ```
 
@@ -159,7 +173,7 @@ A validação de isolamento usa um script Python de orquestração Docker, que t
 pode ser executado em um container auxiliar, sem instalar Python/.venv local:
 
 ```powershell
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "${PWD}:/workspace:ro" -w /workspace -e HOSPITAL_HOST_ROOT="${PWD}" docker:27-cli sh -c "apk add --no-cache python3 >/dev/null && python3 integration/isolation_test.py"
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "${PWD}:/workspace:ro" -w /workspace -e HOSPITAL_HOST_ROOT="${PWD}" docker:27-cli sh -c "apk add --no-cache python3 >/dev/null && python3 subir-local/isolation_test.py"
 ```
 
 Não use esse container auxiliar nos servidores; ele recebe acesso ao Docker
@@ -168,7 +182,7 @@ removem dados sintéticos; o teste de calendário usa eventos simulados.
 
 As bridges Docker simulam a segmentação local, sem criar VLANs físicas.
 As configurações para duas máquinas, portas, mTLS, firewall, segredos e limites
-operacionais estão em [integration/README.md](integration/README.md).
+operacionais estão em [subir-local/README.md](subir-local/README.md).
 Vault mantém sua configuração e armazenamento; um volume novo exige inicialização
 e unseal explícitos. Keycloak ainda usa start-dev e não substitui o login Django.
 

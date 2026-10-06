@@ -200,3 +200,19 @@ SESSION_COOKIE_SECURE = os.environ.get('DJANGO_SECURE_COOKIES', 'False').lower()
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
 SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SSL_REDIRECT', 'False').lower() in ('true', '1', 'yes')
 SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_HSTS_SECONDS', '0'))
+
+# Dedicated sanitized stream. Console email/error logs are never collected by SIEM.
+security_log = os.environ.get('HOSPITAL_SECURITY_LOG')
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {'security_json': {'format': '%(message)s'}},
+    'handlers': {
+        'security': ({'class': 'logging.handlers.WatchedFileHandler',
+                      'filename': security_log, 'encoding': 'utf-8',
+                      'formatter': 'security_json', 'delay': True}
+                     if security_log else {'class': 'logging.NullHandler'}),
+    },
+    'loggers': {'hospital.security': {'handlers': ['security'], 'level': 'INFO',
+                                    'propagate': False}},
+}

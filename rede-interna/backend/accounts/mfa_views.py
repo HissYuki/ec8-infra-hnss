@@ -14,6 +14,7 @@ from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from .authentication import finish_mfa, verified
 from .forms import RecoveryCodeForm, TOTPForm
+from .security_audit import audit
 
 
 def enrollment_device(request):
@@ -56,7 +57,9 @@ def setup(request):
                 codes = recovery_codes(request.user)
                 django_otp.login(request, device)
                 request.session.pop('mfa_reenroll', None)
+                audit('mfa_enrolled', request.user)
                 return render(request, 'accounts/mfa_codes.html', {'codes': codes})
+            audit('mfa_failed', request.user)
             form.add_error('token', 'Código inválido ou temporariamente bloqueado. Tente novamente.')
     return render(request, 'accounts/mfa_setup.html', {'form': form})
 
@@ -91,7 +94,9 @@ def verify(request):
         device = django_otp.verify_token(request.user, device.persistent_id, form.cleaned_data['token'])
         if device is not None:
             django_otp.login(request, device)
+            audit('mfa_verified', request.user)
             return finish_mfa(request)
+        audit('mfa_failed', request.user)
         form.add_error('token', 'Código inválido, já utilizado ou temporariamente bloqueado.')
     return render(request, 'accounts/mfa_verify.html', {'form': form})
 
@@ -111,7 +116,9 @@ def recover(request):
         if accepted:
             django_otp.login(request, accepted)
             request.session['mfa_reenroll'] = True
+            audit('mfa_recovery_used', request.user)
             return redirect('accounts:mfa_setup')
+        audit('mfa_failed', request.user)
         form.add_error('token', 'Código inválido, já utilizado ou temporariamente bloqueado.')
     return render(request, 'accounts/mfa_recover.html', {'form': form})
 

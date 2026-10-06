@@ -33,9 +33,10 @@ no PostgreSQL; nenhuma sessão depende de arquivos locais do backend.
 Docker Desktop com containers Linux e Compose v2. Na raiz do repositório:
 
 ```powershell
-./integration/local.ps1 up
-./integration/local.ps1 status
-./integration/local.ps1 test
+./subir-local/local.ps1 up
+./subir-local/local.ps1 status
+./subir-local/local.ps1 test
+./subir-local/local.ps1 monitoring-test
 ```
 
 Acesse **https://localhost:8443**. HTTP em `http://localhost:18080` redireciona
@@ -47,9 +48,9 @@ existentes automaticamente. `prepare` somente gera configuração/certificados.
 Para regenerar uma CA local expirada, execute explicitamente o script
 `certificates.sh --regenerate` no container auxiliar e reinicie os serviços TLS.
 
-O script gera `integration/.env` com senhas aleatórias e arquivos em
-`integration/tls/`, todos ignorados pelo Git. A configuração antiga fica em
-integration/legacy/.env (ignorada). Não apaga `hospital-git_postgres_data`. O volume integrado é
+O script gera `subir-local/.env` com senhas aleatórias e arquivos em
+`subir-local/tls/`, todos ignorados pelo Git. A configuração antiga fica em
+subir-local/legacy/.env (ignorada). Não apaga `hospital-git_postgres_data`. O volume integrado é
 `hospital-interna_postgres_data`. O banco novo inicia sem os usuários e consultas
 anteriores, conforme autorizado. As migrations preservadas criam o esquema e os
 nove exames padrão. Nenhum dump ou importação foi executado.
@@ -57,10 +58,10 @@ nove exames padrão. Nenhum dump ou importação foi executado.
 Comandos Django, executados na raiz:
 
 ```powershell
-docker compose -p hospital-interna --env-file integration/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml exec backend python manage.py createsuperuser
-docker compose -p hospital-interna --env-file integration/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml exec backend python manage.py migrate
-docker compose -p hospital-interna --env-file integration/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml exec backend python manage.py makemigrations
-docker compose -p hospital-interna --env-file integration/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml logs -f backend
+docker compose -p hospital-interna --env-file subir-local/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml exec backend python manage.py createsuperuser
+docker compose -p hospital-interna --env-file subir-local/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml exec backend python manage.py migrate
+docker compose -p hospital-interna --env-file subir-local/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml exec backend python manage.py makemigrations
+docker compose -p hospital-interna --env-file subir-local/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml logs -f backend
 ```
 
 A subida padrão da Rede Interna inclui backend, PostgreSQL da aplicação, Vault,
@@ -68,9 +69,14 @@ PostgreSQL do Keycloak e Keycloak, sem necessidade de profiles. No ambiente loca
 
 - Keycloak: http://localhost:8180/admin/ (porta configurável por KEYCLOAK_PORT).
 - Vault: http://localhost:8200/ui/.
+- Wazuh: https://localhost:9443 (usuário `admin`; senha em `WAZUH_INDEXER_ADMIN_PASSWORD`).
+
+A central Wazuh também faz parte da subida padrão. Os três agentes Docker são
+de laboratório; a implantação nos servidores exige agentes nativos por máquina.
+Consulte [a configuração e os limites dos testes locais](../rede-interna/wazuh/README.md).
 
 As credenciais administrativas do Keycloak ficam nas variáveis KEYCLOAK_ADMIN e
-KEYCLOAK_ADMIN_PASSWORD de integration/.env. Em um volume Vault novo, o servidor
+KEYCLOAK_ADMIN_PASSWORD de subir-local/.env. Em um volume Vault novo, o servidor
 inicia não inicializado e selado; inicialização e unseal são operações próprias,
 sem geração automática de tokens/chaves pelo script. A interface disponível não
 significa que o cofre esteja desbloqueado.
@@ -83,7 +89,7 @@ ambiente, nunca o backend de console.
 Para parar sem apagar dados:
 
 ```powershell
-./integration/local.ps1 down
+./subir-local/local.ps1 down
 ```
 
 Não acrescente `--volumes`/`-v` aos comandos de encerramento. A rede externa
@@ -98,9 +104,9 @@ redirecionamento HTTPS porque o Client testa views diretamente por HTTP.
 Teste de navegador adicional, com Node, Playwright e Chrome disponíveis:
 
 ```powershell
-node integration/browser_test.cjs 'C:/Program Files/Google/Chrome/Application/chrome.exe'
+node subir-local/browser_test.cjs 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 node dmz/frontend/tests/calendar_browser.cjs 'C:/Program Files/Google/Chrome/Application/chrome.exe'
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "${PWD}:/workspace:ro" -w /workspace -e HOSPITAL_HOST_ROOT="${PWD}" docker:27-cli sh -c "apk add --no-cache python3 >/dev/null && python3 integration/isolation_test.py"
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "${PWD}:/workspace:ro" -w /workspace -e HOSPITAL_HOST_ROOT="${PWD}" docker:27-cli sh -c "apk add --no-cache python3 >/dev/null && python3 subir-local/isolation_test.py"
 ```
 
 O primeiro cria e remove usuários/dados sintéticos com prefixo único e valida
@@ -113,6 +119,12 @@ exclusivamente locais. Os testes Django existentes cobrem códigos errados,
 expirados/usados, MFA de recuperação e autorização entre médicos.
 
 ## Implantação em duas máquinas
+
+A automação separada está em [subir-servidor](../subir-servidor/README.md), com
+um script e um exemplo de ambiente por máquina. Use esses scripts e preserve
+os nomes de projeto `hospital-interna` e `hospital-dmz`. Os exemplos Compose
+diretos abaixo explicam o mecanismo; acrescente `--project-name` correspondente
+se os executar manualmente para não selecionar volumes de outro projeto.
 
 As redes `vlan10`, `vlan20`, `vlan30` e `vlan40` são **bridges locais**.
 Elas não criam interfaces 802.1Q, rotas entre máquinas ou regras no pfSense.
@@ -260,9 +272,9 @@ a imagem Nginx final recebe apenas os estáticos coletados. O backend em execuç
 não depende de arquivos fora de sua pasta. Templates não são movidos à DMZ:
 continuam renderizados pelo Django com sessão, URLs e CSRF.
 
-Use ./integration/local.ps1 dev para montar rede-interna/backend em /app com
+Use ./subir-local/local.ps1 dev para montar rede-interna/backend em /app com
 reload, preservando o restante da infraestrutura. Assim makemigrations grava
 os arquivos no repositório. Reconstrua o frontend depois de alterar seus estáticos.
 A função hospital e os comandos de desenvolvimento estão no README da raiz.
-integration/ mantém uma função real: preparação local de TLS/segredos, execução
+subir-local/ mantém uma função real: preparação local de TLS/segredos, execução
 dos dois projetos, testes de navegador e isolamento. Certificados/.env são ignorados.

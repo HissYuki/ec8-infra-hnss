@@ -49,7 +49,11 @@ services:
       - ${TLS_DIR:?Defina TLS_DIR}/backend-ca.crt:/run/tls/backend-ca.crt:ro
       - ${TLS_DIR:?Defina TLS_DIR}/frontend.crt:/run/tls/frontend.crt:ro
       - ${TLS_DIR:?Defina TLS_DIR}/frontend.key:/run/tls/frontend.key:ro
-    networks: [frontend_link, backend_egress]
+    networks:
+      frontend_link:
+        priority: 1000
+      backend_egress:
+        priority: 0
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "nginx", "-t"]

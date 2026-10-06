@@ -3,7 +3,74 @@ services:
     networks:
       local_transit:
         aliases: [hospital-backend]
+  wazuh-manager:
+    networks:
+      wazuh_transit:
+        aliases: [wazuh.manager]
+  wazuh-agent-dados:
+    image: wazuh/wazuh-agent:4.14.8
+    hostname: lab-dados
+    restart: unless-stopped
+    mem_limit: 256m
+    environment:
+      WAZUH_MANAGER_SERVER: wazuh.manager
+      WAZUH_AGENT_NAME: lab-dados
+      WAZUH_AGENT_GROUP: dados
+      WAZUH_REGISTRATION_PASSWORD: ${WAZUH_ENROLLMENT_PASSWORD}
+    volumes:
+      - wazuh_agent_dados:/var/ossec/etc
+      - ./wazuh/config/agent-lab.conf:/wazuh-config-mount/etc/ossec.conf:ro
+      - ${WAZUH_RUNTIME_DIR}/certs/root-ca.pem:/etc/wazuh-ca.pem:ro
+      - ${WAZUH_RUNTIME_DIR}/canary/dados:/monitor/canary:ro
+      - ./backend/config:/monitor/config:ro
+      - hospital_security_logs:/monitor/hospital:ro
+    networks:
+      wazuh_transit:
+        priority: 1000
+      vlan20:
+        priority: 0
+    depends_on:
+      wazuh-manager: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q 'status=.connected.' /var/ossec/var/run/wazuh-agentd.state"]
+      interval: 15s
+      retries: 20
+      start_period: 60s
+  wazuh-agent-endpoints:
+    image: wazuh/wazuh-agent:4.14.8
+    hostname: lab-endpoints
+    restart: unless-stopped
+    mem_limit: 256m
+    environment:
+      WAZUH_MANAGER_SERVER: wazuh.manager
+      WAZUH_AGENT_NAME: lab-endpoints
+      WAZUH_AGENT_GROUP: endpoints
+      WAZUH_REGISTRATION_PASSWORD: ${WAZUH_ENROLLMENT_PASSWORD}
+    volumes:
+      - wazuh_agent_endpoints:/var/ossec/etc
+      - ./wazuh/config/agent-lab.conf:/wazuh-config-mount/etc/ossec.conf:ro
+      - ${WAZUH_RUNTIME_DIR}/certs/root-ca.pem:/etc/wazuh-ca.pem:ro
+      - ${WAZUH_RUNTIME_DIR}/canary/endpoints:/monitor/canary:ro
+    networks:
+      wazuh_transit:
+        priority: 1000
+      vlan40:
+        priority: 0
+    depends_on:
+      wazuh-manager: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q 'status=.connected.' /var/ossec/var/run/wazuh-agentd.state"]
+      interval: 15s
+      retries: 20
+      start_period: 60s
 networks:
   local_transit:
     external: true
     name: hospital-local-transit
+
+  wazuh_transit:
+    external: true
+    name: hospital-wazuh-transit
+volumes:
+  wazuh_agent_dados:
+  wazuh_agent_endpoints:
