@@ -3,7 +3,7 @@
 set -eu
 umask 077
 cd /certs
-if [ -e public.key ] && [ "${1:-}" != '--regenerate' ]; then
+if [ -e public.crt ] && [ "${1:-}" != '--regenerate' ]; then
     echo 'Certificados locais já existem; nenhuma chave foi substituída.'
     exit 0
 fi

@@ -35,12 +35,12 @@ Na raiz do repositório, usando PowerShell:
 ```
 
 Painel: https://localhost:9443. Usuário `admin`; senha na variável
-`WAZUH_INDEXER_ADMIN_PASSWORD` de `subir-local/.env`. A CA de teste está em
-`subir-local/wazuh-runtime/certs/root-ca.pem`. Os certificados locais valem
+`WAZUH_INDEXER_ADMIN_PASSWORD` de `senha-rede-interna/.env`. A CA de teste está em
+`senha-rede-interna/wazuh-runtime/certs/root-ca.pem`. Os certificados locais valem
 30 dias e não substituem certificados de implantação.
 
 O bootstrap gera senhas aleatórias, hashes bcrypt nativos e certificados por
-OpenSSL em `subir-local/wazuh-runtime/`, ignorado pelo Git. Preserva senhas,
+OpenSSL em `senha-rede-interna/wazuh-runtime/`, ignorado pelo Git. Preserva senhas,
 certificados e volumes existentes. Alterar uma senha apenas no `.env` não
 rotaciona contas já inicializadas: a rotação precisa ser coordenada com os
 serviços. A chave privada da CA não é montada nos serviços nem nos agentes.

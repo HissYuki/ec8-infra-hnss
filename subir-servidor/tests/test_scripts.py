@@ -41,6 +41,8 @@ with open(os.environ['DOCKER_TEST_LOG'], 'a') as log:
                       BACKEND_URL='https://backend.example.org:8444',
                       TLS_DIR=str(self.work / 'tls'),
                       WAZUH_RUNTIME_DIR=str(self.work / 'wazuh'))
+        values['VAULT_CONFIG_FILE'] = str(self.work / 'vault.hcl')
+        (self.work / 'vault.hcl').write_text('fixture: configuration validation only')
         for folder, files in {
             'tls': ['public.crt', 'public.key', 'backend-ca.crt', 'frontend.crt',
                     'frontend.key', 'backend.crt', 'backend.key', 'client-ca.crt'],
@@ -88,7 +90,8 @@ with open(os.environ['DOCKER_TEST_LOG'], 'a') as log:
     def test_migrations_are_explicit_and_internal_only(self):
         self.prepare('Rede Interna')
         self.assertEqual(self.run_script('Rede Interna', 'migrate').returncode, 0)
-        self.assertEqual(self.commands()[-1][-4:], ['python', 'manage.py', 'migrate', '--noinput'])
+        self.assertTrue(any(command[-4:] == ['python', 'manage.py', 'migrate', '--noinput'] for command in self.commands()))
+        self.assertIn('--type=diff', self.commands()[-1])
         self.assertNotEqual(self.run_script('DMZ', 'migrate').returncode, 0)
 
     def test_missing_configuration_and_extra_flags_are_rejected(self):

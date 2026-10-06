@@ -1,5 +1,9 @@
 # Integração da aplicação com DMZ e Rede Interna
 
+Prometheus: execute `./subir-local/local.ps1 prometheus-test` para verificar os
+exporters das VLANs 10, 20 e 40. O laboratório usa uma bridge exclusiva de coleta;
+veja [configuração nos dois servidores](../rede-interna/prometheus/README.md).
+
 ## Fluxo implementado
 
 ```text
@@ -48,9 +52,9 @@ existentes automaticamente. `prepare` somente gera configuração/certificados.
 Para regenerar uma CA local expirada, execute explicitamente o script
 `certificates.sh --regenerate` no container auxiliar e reinicie os serviços TLS.
 
-O script gera `subir-local/.env` com senhas aleatórias e arquivos em
-`subir-local/tls/`, todos ignorados pelo Git. A configuração antiga fica em
-subir-local/legacy/.env (ignorada). Não apaga `hospital-git_postgres_data`. O volume integrado é
+O script gera `senha-rede-interna/.env` com senhas aleatórias e arquivos em
+`senha-dmz/tls/`, todos ignorados pelo Git. A configuração antiga fica em
+senha-rede-interna/legacy/.env (ignorada). Não apaga `hospital-git_postgres_data`. O volume integrado é
 `hospital-interna_postgres_data`. O banco novo inicia sem os usuários e consultas
 anteriores, conforme autorizado. As migrations preservadas criam o esquema e os
 nove exames padrão. Nenhum dump ou importação foi executado.
@@ -58,10 +62,10 @@ nove exames padrão. Nenhum dump ou importação foi executado.
 Comandos Django, executados na raiz:
 
 ```powershell
-docker compose -p hospital-interna --env-file subir-local/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml exec backend python manage.py createsuperuser
-docker compose -p hospital-interna --env-file subir-local/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml exec backend python manage.py migrate
-docker compose -p hospital-interna --env-file subir-local/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml exec backend python manage.py makemigrations
-docker compose -p hospital-interna --env-file subir-local/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml logs -f backend
+docker compose -p hospital-interna --env-file senha-rede-interna/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml exec backend python manage.py createsuperuser
+docker compose -p hospital-interna --env-file senha-rede-interna/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml exec backend python manage.py migrate
+docker compose -p hospital-interna --env-file senha-rede-interna/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml exec backend python manage.py makemigrations
+docker compose -p hospital-interna --env-file senha-rede-interna/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml logs -f backend
 ```
 
 A subida padrão da Rede Interna inclui backend, PostgreSQL da aplicação, Vault,
@@ -76,7 +80,7 @@ de laboratório; a implantação nos servidores exige agentes nativos por máqui
 Consulte [a configuração e os limites dos testes locais](../rede-interna/wazuh/README.md).
 
 As credenciais administrativas do Keycloak ficam nas variáveis KEYCLOAK_ADMIN e
-KEYCLOAK_ADMIN_PASSWORD de subir-local/.env. Em um volume Vault novo, o servidor
+KEYCLOAK_ADMIN_PASSWORD de senha-rede-interna/.env. Em um volume Vault novo, o servidor
 inicia não inicializado e selado; inicialização e unseal são operações próprias,
 sem geração automática de tokens/chaves pelo script. A interface disponível não
 significa que o cofre esteja desbloqueado.

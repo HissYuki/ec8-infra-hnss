@@ -1,4 +1,5 @@
 services:
+  # VLAN20
   backend:
     build:
       context: ./backend
@@ -52,23 +53,47 @@ services:
       retries: 6
       start_period: 20s
     restart: unless-stopped
+
   hashicorp-vault:
     image: hashicorp/vault:latest
     container_name: dados-vault
+    depends_on:
+      - kms-vault
     ports:
       - "${SECURITY_BIND_IP:-127.0.0.1}:8200:8200"
     environment:
-      VAULT_ADDR: "http://0.0.0.0:8200"
-      VAULT_API_ADDR: "http://0.0.0.0:8200"
+      VAULT_ADDR: "http://127.0.0.1:8200"
+      VAULT_API_ADDR: ${VAULT_API_ADDR:-http://hashicorp-vault:8200}
+      VAULT_TRANSIT_SEAL_TOKEN: ${VAULT_TRANSIT_SEAL_TOKEN:-}
     cap_add: [IPC_LOCK]
     volumes:
       - vault_data:/vault/file
-      - ./vault:/vault/config
+      - ${VAULT_CONFIG_FILE:?Defina VAULT_CONFIG_FILE}:/vault/config/vault.hcl:ro
     command: server
     networks: [vlan20]
     restart: unless-stopped
+
+  # Cofre persistente que pode fornecer Transit para auto-unseal após configuração.
+  kms-vault:
+    image: hashicorp/vault:latest
+    container_name: kms-vault
+    ports:
+      - "${KMS_BIND_IP:-127.0.0.1}:${KMS_PORT:-8201}:8200"
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_ADDR: "http://127.0.0.1:8200"
+      VAULT_API_ADDR: ${KMS_API_ADDR:-http://kms-vault:8200}
+    volumes:
+      - kms_data:/vault/file
+      - ./kms/kms.hcl:/vault/config/kms.hcl:ro
+    command: server
+    networks:
+      - vlan20
+    restart: unless-stopped
+
   postgresql:
-    image: postgres:15-alpine
+    build: ./postgres
     container_name: dados-postgres
     environment:
       POSTGRES_USER: ${INFRA_POSTGRES_USER:-app_admin}
@@ -77,16 +102,29 @@ services:
       APP_DB: ${POSTGRES_DB:?Defina POSTGRES_DB}
       APP_USER: ${POSTGRES_USER:?Defina POSTGRES_USER}
       APP_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD}
+      PGBACKREST_PG1_USER: ${INFRA_POSTGRES_USER:-app_admin}
+      PGBACKREST_PG1_DATABASE: ${INFRA_POSTGRES_DB:-dados_db}
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=replica"
+      - "-c"
+      - "archive_mode=on"
+      - "-c"
+      - "archive_command=pgbackrest --config=/etc/pgbackrest.conf --stanza=hospital archive-push %p"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init-app.sh:/docker-entrypoint-initdb.d/10-app.sh:ro
+      - ./pgbackrest/pgbackrest-dados.conf:/etc/pgbackrest.conf:ro
+      - pgbackrest_data:/var/lib/pgbackrest
     networks: [db_app]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\" && test -f /tmp/pgbackrest.ready"]
       interval: 5s
       timeout: 5s
-      retries: 12
+      retries: 60
     restart: unless-stopped
+
   postgresql-keycloak:
     image: postgres:15-alpine
     container_name: dados-postgres-keycloak
@@ -103,6 +141,26 @@ services:
       timeout: 5s
       retries: 12
     restart: unless-stopped
+
+  node-exporter-dados:
+    image: prom/node-exporter:latest
+    container_name: node-exporter-vlan20
+    ports:
+      - "${NODE_EXPORTER_BIND_IP:-127.0.0.1}:${NODE_EXPORTER_PORT:-9100}:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - vlan20
+    restart: unless-stopped
+
+  # VLAN 30
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: seguranca-keycloak
@@ -230,6 +288,56 @@ services:
       timeout: 10s
       retries: 20
       start_period: 90s
+
+  pgbackrest-repo:
+    image: alpine:latest
+    container_name: seguranca-pgbackrest
+    command: ["sleep", "infinity"]
+    volumes:
+      - pgbackrest_data:/var/lib/pgbackrest:ro
+    # Observador do volume compartilhado; não é um servidor remoto de backup.
+    networks:
+      vlan30: {priority: 1000}
+      vlan20: {priority: 0}
+    restart: unless-stopped
+
+  prometheus-targets:
+    image: alpine:3.22
+    network_mode: none
+    environment:
+      PROMETHEUS_TARGET_VLAN10: ${PROMETHEUS_TARGET_VLAN10:?Defina os exporters da VLAN 10}
+      PROMETHEUS_TARGET_VLAN20: ${PROMETHEUS_TARGET_VLAN20:?Defina os exporters da VLAN 20}
+      PROMETHEUS_TARGET_VLAN40: ${PROMETHEUS_TARGET_VLAN40:?Defina os exporters da VLAN 40}
+    volumes:
+      - ./prometheus/prepare-targets.sh:/prepare-targets.sh:ro
+      - prometheus_targets:/targets
+    command: ["sh", "/prepare-targets.sh"]
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: servicos-prometheus
+    ports:
+      - "${PROMETHEUS_BIND_IP:-127.0.0.1}:${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+      - prometheus_targets:/etc/prometheus/targets:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}'
+      - '--storage.tsdb.retention.size=${PROMETHEUS_RETENTION_SIZE:-2GB}'
+    networks:
+      vlan30: {priority: 1000}
+    depends_on:
+      prometheus-targets: {condition: service_completed_successfully}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
 networks:
   vlan20:
     driver: bridge
@@ -249,9 +357,11 @@ networks:
   db_app:
     driver: bridge
     internal: true
+
 volumes:
   vault_data:
   vault_config:
+  kms_data:
   keycloak_db_data:
   postgres_data:
 
@@ -263,3 +373,7 @@ volumes:
   wazuh_indexer:
   wazuh_dashboard:
   hospital_security_logs:
+  pgbackrest_data:
+  pgbackrest_config:
+  prometheus_data:
+  prometheus_targets:

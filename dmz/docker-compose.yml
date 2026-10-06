@@ -1,4 +1,20 @@
 services:
+  node-exporter-dmz:
+    image: prom/node-exporter:latest
+    restart: unless-stopped
+    ports:
+      - "${NODE_EXPORTER_BIND_IP:-127.0.0.1}:${DMZ_NODE_EXPORTER_PORT:-19110}:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks: [vlan10]
+
   nginx-proxy:
     build: ./proxy
     ports:
@@ -16,6 +32,7 @@ services:
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
+
   modsecurity-waf:
     # Digest da imagem já validada; atualização exige nova validação do WAF.
     image: owasp/modsecurity-crs:nginx@sha256:133267aa811e1a57a23b52ef04b3c30e802bcbe5454588f6d6af1f69f4b2b667
@@ -36,6 +53,7 @@ services:
         priority: 0
     depends_on: [nginx-web]
     restart: unless-stopped
+
   nginx-web:
     build:
       context: ./frontend
@@ -58,6 +76,7 @@ services:
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
+
 networks:
   # Bridges locais, não VLANs físicas; faixas separadas das interfaces reais.
   vlan10:

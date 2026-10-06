@@ -4,7 +4,8 @@ set -Eeuo pipefail
 
 die() { printf 'Erro: %s\n' "$*" >&2; exit 1; }
 REPO_ROOT="$(cd -- "$DEPLOY_DIR/../.." && pwd)"
-ENV_FILE="${ENV_FILE:-$DEPLOY_DIR/.env}"
+if [[ "$DEPLOY_AREA" == interna ]]; then SECRET_DIR="$REPO_ROOT/senha-rede-interna"; else SECRET_DIR="$REPO_ROOT/senha-dmz"; fi
+ENV_FILE="${ENV_FILE:-$SECRET_DIR/servidor.env}"
 ACTION="${1:-status}"
 [[ "$#" -le 1 ]] || die 'Forneça somente uma ação; flags adicionais não são aceitas.'
 case "$ACTION" in check|up|down|status|logs|migrate) ;; *) die 'Use check, up, down, status, logs ou migrate (somente Rede Interna).' ;; esac
@@ -48,11 +49,15 @@ check_configuration() {
     tls="$(read_env TLS_DIR)"
     [[ "$tls" == /* ]] || die 'TLS_DIR deve ser um caminho absoluto Linux.'
     if [[ "$DEPLOY_AREA" == interna ]]; then
+        for key in PROMETHEUS_TARGET_VLAN10 PROMETHEUS_TARGET_VLAN20 PROMETHEUS_TARGET_VLAN40; do require_env "$key"; done
+        check_interface NODE_EXPORTER_BIND_IP
         for key in DJANGO_SECRET_KEY POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD INFRA_POSTGRES_PASSWORD KEYCLOAK_DB_PASSWORD KEYCLOAK_ADMIN_PASSWORD WAZUH_RUNTIME_DIR WAZUH_INDEXER_ADMIN_PASSWORD WAZUH_DASHBOARD_PASSWORD WAZUH_API_PASSWORD WAZUH_ENROLLMENT_PASSWORD; do require_env "$key"; done
         check_interface BACKEND_BIND_IP
         check_interface WAZUH_BIND_IP
         require_env WAZUH_DASHBOARD_BIND_IP
         require_env SECURITY_BIND_IP
+        require_env VAULT_CONFIG_FILE
+        check_file "$(read_env VAULT_CONFIG_FILE)"
         [[ "$(read_env EMAIL_BACKEND)" == django.core.mail.backends.smtp.EmailBackend ]] || die 'Configure SMTP; o backend de console é somente local.'
         for key in EMAIL_HOST DEFAULT_FROM_EMAIL; do require_env "$key"; done
         if [[ -n "$(read_env EMAIL_HOST_USER)" || -n "$(read_env EMAIL_HOST_PASSWORD)" ]]; then
@@ -69,6 +74,7 @@ check_configuration() {
         fi
         printf '%s\n' 'Atenção: Keycloak ainda usa start-dev e Vault tem TLS desativado no Compose/configuração atual. Este script não os converte para produção.'
     else
+        check_interface NODE_EXPORTER_BIND_IP
         check_interface DMZ_BIND_IP
         for key in BACKEND_URL BACKEND_TLS_NAME; do require_env "$key"; done
         [[ "$(read_env BACKEND_URL)" == https://* ]] || die 'BACKEND_URL precisa usar HTTPS com mTLS.'
@@ -99,6 +105,8 @@ case "$ACTION" in
         compose up -d --wait postgresql
         compose build backend
         compose run --rm --no-deps backend python manage.py migrate --noinput
+        # Garante um ponto de recuperação contendo o esquema recém-migrado.
+        compose exec -T postgresql su-exec postgres pgbackrest --config=/etc/pgbackrest.conf --stanza=hospital backup --type=diff
         ;;
     down) compose down; printf '%s\n' 'Containers deste projeto encerrados. Volumes preservados.' ;;
     status) compose ps ;;

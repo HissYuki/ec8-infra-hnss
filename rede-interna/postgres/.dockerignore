@@ -1,0 +1,4 @@
+*
+!Dockerfile
+!custom-entrypoint.sh
+!init-pgbackrest.sh

@@ -24,6 +24,12 @@ dashboard = inspect('hospital-interna-wazuh-dashboard-1')
 agent_dmz = inspect('hospital-dmz-wazuh-agent-dmz-1')
 agent_dados = inspect('hospital-interna-wazuh-agent-dados-1')
 agent_endpoints = inspect('hospital-interna-wazuh-agent-endpoints-1')
+prometheus = inspect('servicos-prometheus')
+exporter = inspect('node-exporter-vlan20')
+exporter_dmz = inspect('hospital-dmz-node-exporter-dmz-1')
+exporter_endpoints = inspect('hospital-interna-node-exporter-endpoints-1')
+kms = inspect('kms-vault')
+backup_repo = inspect('seguranca-pgbackrest')
 db_network = 'hospital-interna_db_app'
 assert db_network in backend['NetworkSettings']['Networks']
 assert set(database['NetworkSettings']['Networks']) == {db_network}
@@ -36,13 +42,25 @@ for service in (frontend, proxy, waf):
     assert db_network not in service['NetworkSettings']['Networks']
 assert 'hospital-local-transit' not in proxy['NetworkSettings']['Networks']
 assert 'hospital-local-transit' not in waf['NetworkSettings']['Networks']
-for service in (manager, indexer, dashboard, agent_dmz):
+for service in (manager, indexer, dashboard, agent_dmz, prometheus, exporter, kms, backup_repo):
     assert db_network not in service['NetworkSettings']['Networks']
 assert not indexer['HostConfig']['PortBindings']
 assert '55000/tcp' not in manager['HostConfig']['PortBindings']
 assert set(indexer['NetworkSettings']['Networks']) == {'hospital-interna_wazuh_core'}
 assert not agent_dmz['HostConfig']['Privileged']
 assert all(mount['Destination'] != '/var/run/docker.sock' for mount in agent_dmz['Mounts'])
+assert set(prometheus['NetworkSettings']['Networks']) == {'hospital-monitoring-transit', 'hospital-interna_vlan30'}
+for node, network in ((exporter, 'hospital-interna_vlan20'),
+                      (exporter_dmz, 'hospital-dmz_vlan10'),
+                      (exporter_endpoints, 'hospital-interna_vlan40')):
+    assert set(node['NetworkSettings']['Networks']) == {network, 'hospital-monitoring-transit'}
+    assert not node['HostConfig']['Privileged']
+    assert all(mount['Destination'] != '/var/run/docker.sock' for mount in node['Mounts'])
+    assert all(binding['HostIp'] == '127.0.0.1' for bindings in (node['HostConfig']['PortBindings'] or {}).values() for binding in bindings)
+assert all(binding['HostIp'] == '127.0.0.1' for bindings in exporter['HostConfig']['PortBindings'].values() for binding in bindings)
+for service in (prometheus, kms):
+    assert all(binding['HostIp'] == '127.0.0.1' for bindings in service['HostConfig']['PortBindings'].values() for binding in bindings)
+assert any(mount['Name'] == 'hospital-interna_pgbackrest_data' for mount in database['Mounts'] if mount['Type'] == 'volume')
 for agent, network in (
     (agent_dmz, 'hospital-dmz_vlan10'),
     (agent_dados, 'hospital-interna_vlan20'),
@@ -59,6 +77,7 @@ for network, destination, port in (
     ('hospital-dmz_backend_egress', db_ip, 5432),
     ('hospital-dmz_vlan10', backend_ip, 8444),
     ('hospital-wazuh-transit', db_ip, 5432),
+    ('hospital-monitoring-transit', db_ip, 5432),
     ('hospital-wazuh-transit', indexer['NetworkSettings']['Networks']['hospital-interna_wazuh_core']['IPAddress'], 9200),
 ):
     source = f'''import socket
@@ -87,8 +106,8 @@ else:
     print('Backend encerrou conexão sem certificado')
 '''
 host_root = os.environ.get('HOSPITAL_HOST_ROOT')
-ca = (host_root.replace(chr(92), '/') + '/subir-local/tls/backend-ca.crt'
-      if host_root else Path(__file__).resolve().parent / 'tls' / 'backend-ca.crt')
+ca = (host_root.replace(chr(92), '/') + '/senha-dmz/tls/backend-ca.crt'
+      if host_root else Path(__file__).resolve().parents[1] / 'senha-dmz' / 'tls' / 'backend-ca.crt')
 print(docker('run', '--rm', '--network', 'hospital-local-transit',
              '--mount', f'type=bind,source={ca},target=/tmp/backend-ca.crt,readonly',
              'python:3.13-slim', 'python', '-c', source))

@@ -7,7 +7,7 @@ const crypto = require('node:crypto');
 const {execFileSync} = require('node:child_process');
 const {chromium} = require('playwright');
 const root = path.resolve(__dirname, '..');
-const compose = ['compose','--project-name','hospital-interna','--env-file',path.join(__dirname,'.env'),
+const compose = ['compose','--project-name','hospital-interna','--env-file',path.join(__dirname,'../senha-rede-interna/.env'),
   '-f',path.join(root,'rede-interna/docker-compose.yml'),'-f',path.join(root,'rede-interna/compose.local.yaml')];
 const prefix = 'hospital_integration_' + crypto.randomBytes(5).toString('hex');
 const fixtureSource = fs.readFileSync(path.join(__dirname,'browser_fixture.py'),'utf8');

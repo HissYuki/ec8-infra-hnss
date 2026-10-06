@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const {chromium} = require('playwright');
-const env = Object.fromEntries(fs.readFileSync(path.join(__dirname, '.env'), 'utf8')
+const env = Object.fromEntries(fs.readFileSync(path.join(__dirname, '../senha-rede-interna/.env'), 'utf8')
   .split(/\r?\n/).filter(line => line && !line.startsWith('#') && line.includes('='))
   .map(line => [line.slice(0,line.indexOf('=')), line.slice(line.indexOf('=')+1)]));
 let stage = 'launch';

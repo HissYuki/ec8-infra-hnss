@@ -54,6 +54,14 @@ incluem três agentes de laboratório; o guia em [rede-interna/wazuh](rede-inter
 explica a instalação futura de agentes nos hosts e as portas entre VLANs.
 A organização de arquivos não muda as redes, os volumes ou as regras de acesso.
 
+A main integrada também inclui Prometheus/Node Exporter, pgBackRest e o cofre
+KMS. Veja [ajustes, validações e limites dessa integração](rede-interna/README-integracao.md).
+Prometheus: http://localhost:9090; KMS: http://localhost:8201/ui/.
+Os arquivos privados ficam em `senha-rede-interna/` e `senha-dmz/`, fora do Git.
+Veja [como entregar as pastas e iniciar em outra máquina](SEGREDOS.md).
+Prometheus coleta exporters das VLANs 10, 20 e 40 no laboratório. Veja
+[targets, limitações locais e regras para os servidores](rede-interna/prometheus/README.md).
+
 ## Iniciar, desenvolver e parar
 
 Os comandos abaixo são somente locais. Para as duas máquinas Linux, consulte
@@ -69,11 +77,11 @@ Requisitos: Docker Desktop com containers Linux e Docker Compose >= 2.17
 ```
 
 Site: https://localhost:8443; Keycloak: http://localhost:8180/admin/;
-Wazuh: https://localhost:9443 (`admin`, senha em `subir-local/.env`).
+Wazuh: https://localhost:9443 (`admin`, senha em `senha-rede-interna/.env`).
 Vault: http://localhost:8200/ui/. A CA HTTPS é de teste; detalhes e limitações
 estão no [guia de integração](subir-local/README.md).
 
-O script prepara `subir-local/.env` a partir do exemplo global somente quando
+O script prepara `senha-rede-interna/.env` a partir do exemplo global somente quando
 ele não existe, com senhas aleatórias, e preserva certificados e volumes
 existentes. Não gere um novo arquivo de segredos para um banco já inicializado.
 
@@ -102,7 +110,7 @@ seu volume PostgreSQL antigo não foi apagado.
 Na raiz, defina uma função PowerShell para não repetir as opções:
 
 ```powershell
-function hospital { docker compose -p hospital-interna --env-file subir-local/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml @args }
+function hospital { docker compose -p hospital-interna --env-file senha-rede-interna/.env -f rede-interna/docker-compose.yml -f rede-interna/compose.local.yaml @args }
 hospital exec backend python manage.py check
 hospital exec backend python manage.py makemigrations --check --dry-run
 hospital exec backend python manage.py showmigrations

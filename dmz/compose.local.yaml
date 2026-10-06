@@ -1,4 +1,10 @@
 services:
+  node-exporter-dmz:
+    volumes:
+      - node_exporter_lab_root:/rootfs:ro
+    networks:
+      monitoring_transit: {priority: 1000}
+      vlan10: {priority: 0}
   nginx-web:
     networks:
       local_transit:
@@ -26,6 +32,9 @@ services:
       retries: 20
       start_period: 60s
 networks:
+  monitoring_transit:
+    external: true
+    name: hospital-monitoring-transit
   local_transit:
     external: true
     name: hospital-local-transit
@@ -34,4 +43,5 @@ networks:
     external: true
     name: hospital-wazuh-transit
 volumes:
+  node_exporter_lab_root:
   wazuh_agent_dmz:

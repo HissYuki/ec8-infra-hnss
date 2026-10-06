@@ -240,6 +240,8 @@ Desktop.ini
 ~$*
 
 # Integração: material local/privado nunca versionado.
+/senha-rede-interna/
+/senha-dmz/
 subir-local/tls/
 subir-local/wazuh-runtime/
 integration/tls/
@@ -249,3 +251,5 @@ subir-servidor/**/wazuh-runtime/
 staticfiles/
 dmz/certs/
 rede-interna/certs/
+rede-interna/kms/start-kms.sh
+rede-interna/vault/vault.hcl

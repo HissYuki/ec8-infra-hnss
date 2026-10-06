@@ -18,7 +18,8 @@ inicializa/unseala o Vault. `down` preserva volumes. O padrão sem argumento é
    Admin. Portanto, mantenha o checkout completo para construir a imagem; a
    imagem final do frontend não contém o backend. Alternativamente, construa
    imagens em CI e adapte o Compose para distribuí-las com versões fixas.
-2. Em cada máquina, copie apenas seu `.env.example` para `.env`, preencha os
+2. Em cada máquina, copie apenas seu `.env.example` para `servidor.env` na pasta
+   privada `senha-rede-interna/` ou `senha-dmz/` da raiz do checkout. Preencha os
    valores e aplique `chmod 600` ao arquivo. Não reutilize o `.env` local.
    `ENV_FILE=/etc/hospital/dmz.env` ou `/etc/hospital/interna.env` permite manter
    segredos fora do checkout. Use valores dotenv literais, sem referências a
@@ -45,6 +46,13 @@ inicializa/unseala o Vault. `down` preserva volumes. O padrão sem argumento é
    Configure `vm.max_map_count >= 262144` no host do Docker.
 6. Configure SMTP e valide envio real. Garanta backup/restauração, capacidade
    de disco, rotação dos logs e retenção dos índices antes de usar dados reais.
+7. Prepare `VAULT_CONFIG_FILE` como arquivo privado absoluto. O exemplo do
+   colega `rede-interna/vault/vault.hcl.example` prevê Transit/KMS; o token
+   restrito vem de `VAULT_TRANSIT_SEAL_TOKEN`. Nenhum script faz init/unseal ou
+   migração de seal. O KMS recebe a configuração `kms.hcl` e volume persistente;
+   habilitar Transit/chave/política depende de procedimento administrativo.
+   Defina `PROMETHEUS_BIND_IP`/`KMS_BIND_IP` somente na gestão/VPN ou loopback.
+   Consulte [os detalhes da integração](../rede-interna/README-integracao.md).
 
 **Pendências da configuração herdada:** Keycloak ainda usa `start-dev` e imagem
 `latest`; Vault tem TLS desativado e precisa de inicialização/unseal controlados.
@@ -58,9 +66,10 @@ associação Keycloak/banco às redes e binds administrativos separados se neces
 Na raiz do checkout da **Rede Interna**:
 
 ```bash
-cp 'subir-servidor/Rede Interna/.env.example' 'subir-servidor/Rede Interna/.env'
+mkdir -p senha-rede-interna
+cp 'subir-servidor/Rede Interna/.env.example' senha-rede-interna/servidor.env
 # Preencha o .env e provisione os certificados antes de continuar.
-chmod 600 'subir-servidor/Rede Interna/.env'
+chmod 600 senha-rede-interna/servidor.env
 bash 'subir-servidor/Rede Interna/subir.sh' check
 # Primeira instalação/atualização: faça backup antes das migrations.
 bash 'subir-servidor/Rede Interna/subir.sh' migrate
@@ -75,9 +84,10 @@ não alteram senhas de roles já criados. Não recrie o volume para corrigir iss
 Depois, na raiz do checkout da **DMZ**:
 
 ```bash
-cp subir-servidor/DMZ/.env.example subir-servidor/DMZ/.env
+mkdir -p senha-dmz
+cp subir-servidor/DMZ/.env.example senha-dmz/servidor.env
 # Preencha o .env e provisione os certificados antes de continuar.
-chmod 600 subir-servidor/DMZ/.env
+chmod 600 senha-dmz/servidor.env
 bash subir-servidor/DMZ/subir.sh check
 bash subir-servidor/DMZ/subir.sh up
 bash subir-servidor/DMZ/subir.sh status
@@ -103,6 +113,10 @@ TCP 1514 e TCP 1515 apenas durante cadastro; painel Wazuh somente gestão/VPN.
 PostgreSQL não é publicado e não deve ficar acessível pela DMZ/Internet.
 Valide também os filtros de encaminhamento do host Docker, não só o pfSense.
 Instale agentes Wazuh nativos em cada máquina; os scripts não os instalam.
+Para métricas, permita Prometheus/VLAN 30 → exporters TCP 9100 (ou a porta
+configurada) nas VLANs 10, 20 e 40, sem exposição pública. Configure os targets
+por IP/FQDN e instale exporters nas estações. Veja
+[o guia do Prometheus](../rede-interna/prometheus/README.md).
 
 Teste HTTPS, login dos quatro perfis, CSRF, MFA, Admin, recuperação via SMTP,
 consultas/exames/agendas, eventos Wazuh, persistência e restauração de backups.

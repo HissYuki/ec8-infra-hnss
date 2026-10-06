@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+# O Compose inicia o KMS com kms.hcl. Exemplo sem chaves embutidas.
+# Init/unseal são administrativos; nunca versione ou imprima chaves nos logs.
+exec docker-entrypoint.sh server
