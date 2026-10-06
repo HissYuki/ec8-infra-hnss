@@ -1,0 +1,5 @@
+# Apenas no servidor real. Bind na interface VLAN 20, nunca em 0.0.0.0.
+services:
+  backend:
+    ports:
+      - "${BACKEND_BIND_IP:?Defina o IP da interface VLAN 20}:8444:8444"

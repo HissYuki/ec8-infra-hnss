@@ -1,0 +1,7 @@
+# Desenvolvimento local do backend com reload. Combinar com compose.local.yaml.
+services:
+  backend:
+    command: ["gunicorn", "--reload", "--config", "config/gunicorn.py", "config.wsgi:application"]
+    volumes:
+      - ./backend:/app
+# Estáticos continuam na imagem frontend; reconstruir nginx-web após editá-los.

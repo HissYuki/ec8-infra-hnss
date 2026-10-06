@@ -238,3 +238,9 @@ Desktop.ini
 *.tmp
 *.temp
 ~$*
+
+# Integração: material local/privado nunca versionado.
+integration/tls/
+staticfiles/
+dmz/certs/
+rede-interna/certs/

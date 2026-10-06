@@ -2,11 +2,12 @@
 // Requer Node.js e Playwright disponíveis no ambiente que executa este teste.
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
+const origin = process.argv[3] || 'https://localhost:8443';
 
 (async () => {
     const browser = await chromium.launch({ headless: true, executablePath: process.argv[2] });
     try {
-        const context = await browser.newContext({ timezoneId: 'America/Sao_Paulo', viewport: { width: 1280, height: 900 } });
+        const context = await browser.newContext({ ignoreHTTPSErrors: true, timezoneId: 'America/Sao_Paulo', viewport: { width: 1280, height: 900 } });
         for (const area of ['medico', 'coordenador', 'paciente']) {
             const page = await context.newPage();
             page.setDefaultTimeout(10000);
@@ -21,7 +22,7 @@ const { chromium } = require('playwright');
             ];
             await page.route(url => url.pathname.startsWith('/eventos-fixture'), route => route.fulfill({ json: area === 'paciente' ? { eventos: events } : events }));
             await page.route('**/consulta-fixture', route => route.fulfill({ contentType: 'text/html', body: '<h1>Detalhes da consulta de teste</h1>' }));
-            await page.goto('http://localhost:8000/');
+            await page.goto(origin + '/');
             const patient = area === 'paciente';
             const element = patient ? `
                 <select id="seletor"><option value="">Selecione</option><option value="1">Médico de teste</option></select>
@@ -32,13 +33,13 @@ const { chromium } = require('playwright');
                     data-aba-passados="aba-passadas" data-lista-atuais="lista-atuais" data-lista-passados="lista-passados"></div>`
                 : '<div data-agenda data-url-eventos="/eventos-fixture"></div>';
             await page.setContent(`<!doctype html><html><head>
-                <link rel="stylesheet" href="http://localhost:8000/static/css/base.css">
-                <link rel="stylesheet" href="http://localhost:8000/static/css/calendarios.css">
-                ${area === 'coordenador' ? '<link rel="stylesheet" href="http://localhost:8000/static/css/coordenador/agenda.css">' : ''}
+                <link rel="stylesheet" href="${origin}/static/css/base.css">
+                <link rel="stylesheet" href="${origin}/static/css/calendarios.css">
+                ${area === 'coordenador' ? `<link rel="stylesheet" href="${origin}/static/css/coordenador/agenda.css">` : ''}
                 </head><body>${element}
                 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
-                <script src="http://localhost:8000/static/js/calendarios.js"></script>
-                <script src="http://localhost:8000/static/js/${patient ? 'agendamentos' : 'agendas'}.js"></script>
+                <script src="${origin}/static/js/calendarios.js"></script>
+                <script src="${origin}/static/js/${patient ? 'agendamentos' : 'agendas'}.js"></script>
                 </body></html>`, { waitUntil: 'networkidle' });
             if (errors.length) throw new Error(errors.join('\n'));
             if (!patient) {

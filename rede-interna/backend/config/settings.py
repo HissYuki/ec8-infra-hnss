@@ -146,10 +146,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = Path(os.environ.get('DJANGO_STATIC_ROOT', BASE_DIR / 'staticfiles'))
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+# Fontes dos estáticos ficam na DMZ; só o collector recebe este caminho.
+static_source = os.environ.get('DJANGO_STATIC_SOURCE')
+STATICFILES_DIRS = [Path(static_source)] if static_source else []
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -187,3 +188,15 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'hospital@localhost')
 PASSWORD_RESET_TIMEOUT = int(os.environ.get('PASSWORD_RESET_TIMEOUT', '600'))
 PASSWORD_RESET_MAX_ATTEMPTS = 5
 PASSWORD_RESET_RESEND_INTERVAL = 60
+
+# Ative somente atrás do proxy confiável; a DMZ substitui o cabeçalho recebido.
+if os.environ.get('DJANGO_TRUST_PROXY', 'False').lower() in ('true', '1', 'yes'):
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+SESSION_COOKIE_SECURE = os.environ.get('DJANGO_SECURE_COOKIES', 'False').lower() in ('true', '1', 'yes')
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SSL_REDIRECT', 'False').lower() in ('true', '1', 'yes')
+SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_HSTS_SECONDS', '0'))
