@@ -16,6 +16,7 @@ services:
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
+  
   modsecurity-waf:
     # Digest da imagem já validada; atualização exige nova validação do WAF.
     image: owasp/modsecurity-crs:nginx@sha256:133267aa811e1a57a23b52ef04b3c30e802bcbe5454588f6d6af1f69f4b2b667
@@ -36,6 +37,7 @@ services:
         priority: 0
     depends_on: [nginx-web]
     restart: unless-stopped
+  
   nginx-web:
     build:
       context: ./frontend
@@ -54,6 +56,7 @@ services:
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
+
 networks:
   # Bridges locais, não VLANs físicas; faixas separadas das interfaces reais.
   vlan10:
